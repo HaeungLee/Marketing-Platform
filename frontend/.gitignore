@@ -1,0 +1,27 @@
+# Node.js
+node_modules/
+*.log
+dist/
+.env
+*.env.local
+*.env.development
+*.env.test
+*.env.production
+
+# Build output
+build/
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
