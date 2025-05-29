@@ -6,7 +6,7 @@ from fastapi.security import HTTPBearer
 from pydantic import BaseModel
 from typing import Optional
 
-from backend.src.config.settings import settings
+from config.settings import settings
 
 router = APIRouter()
 security = HTTPBearer()

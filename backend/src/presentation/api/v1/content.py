@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-from ....application.interfaces.ai_service import AIService
-from ....infrastructure.ai.ollama_service import OllamaService
+from application.interfaces.ai_service import AIService
+from infrastructure.ai.ollama_service import OllamaService
 
 router = APIRouter()
 
@@ -20,7 +20,7 @@ class ContentGenerationRequest(BaseModel):
     business_description: str
     product_name: str = Field(..., description="홍보할 상품/서비스명")
     product_description: str = Field(..., description="상품/서비스 설명")
-    content_type: str = Field(..., description="콘텐츠 타입", regex="^(blog|instagram|youtube|flyer)$")
+    content_type: str = Field(..., description="콘텐츠 타입", pattern="^(blog|instagram|youtube|flyer)$")
     target_audience: Optional[Dict[str, Any]] = Field(None, description="타겟 고객층 정보")
     tone: Optional[str] = Field("친근한", description="콘텐츠 톤앤매너")
     keywords: Optional[List[str]] = Field(None, description="포함할 키워드")

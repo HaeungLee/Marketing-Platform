@@ -5,7 +5,7 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 
-from backend.src.domain.value_objects.coordinates import Coordinates
+from domain.value_objects.coordinates import Coordinates
 
 
 @dataclass

@@ -5,7 +5,6 @@ from pydantic_settings import BaseSettings
 from typing import List, Optional
 import os
 
-
 class Settings(BaseSettings):
     """애플리케이션 설정 클래스"""
     
@@ -36,7 +35,7 @@ class Settings(BaseSettings):
     
     # Ollama 설정
     ollama_base_url: str = "http://localhost:11434"
-    ollama_models: List[str] = ["gemma3:1b", "qwen2.5:1.5b"]
+    ollama_models: str = "gemma3:1b"
     
     # 이메일 설정
     smtp_host: Optional[str] = None

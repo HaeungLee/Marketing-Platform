@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 import {
   Box,
   Grid,
@@ -15,7 +15,7 @@ import {
   Icon,
   Button,
   useColorModeValue,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react";
 import {
   LineChart,
   Line,
@@ -29,7 +29,7 @@ import {
   Cell,
   BarChart,
   Bar,
-} from 'recharts'
+} from "recharts";
 import {
   FiTrendingUp,
   FiUsers,
@@ -37,54 +37,54 @@ import {
   FiDollarSign,
   FiArrowUp,
   FiArrowDown,
-} from 'react-icons/fi'
+} from "react-icons/fi";
 
 // 샘플 데이터
 const performanceData = [
-  { month: '1월', 방문자: 2400, 전환율: 4.2 },
-  { month: '2월', 방문자: 1398, 전환율: 3.8 },
-  { month: '3월', 방문자: 9800, 전환율: 5.1 },
-  { month: '4월', 방문자: 3908, 전환율: 4.7 },
-  { month: '5월', 방문자: 4800, 전환율: 6.2 },
-  { month: '6월', 방문자: 3800, 전환율: 5.9 },
-]
+  { month: "1월", 방문자: 2400, 전환율: 4.2 },
+  { month: "2월", 방문자: 1398, 전환율: 3.8 },
+  { month: "3월", 방문자: 9800, 전환율: 5.1 },
+  { month: "4월", 방문자: 3908, 전환율: 4.7 },
+  { month: "5월", 방문자: 4800, 전환율: 6.2 },
+  { month: "6월", 방문자: 3800, 전환율: 5.9 },
+];
 
 const audienceData = [
-  { name: '20대', value: 35, color: '#8884d8' },
-  { name: '30대', value: 30, color: '#82ca9d' },
-  { name: '40대', value: 20, color: '#ffc658' },
-  { name: '50대+', value: 15, color: '#ff7c7c' },
-]
+  { name: "20대", value: 35, color: "#8884d8" },
+  { name: "30대", value: 30, color: "#82ca9d" },
+  { name: "40대", value: 20, color: "#ffc658" },
+  { name: "50대+", value: 15, color: "#ff7c7c" },
+];
 
 const contentPerformance = [
-  { type: '블로그', 조회수: 12000, 참여율: 4.2 },
-  { type: '인스타그램', 조회수: 8500, 참여율: 6.8 },
-  { type: '유튜브', 조회수: 15000, 참여율: 3.9 },
-  { type: '전단지', 조회수: 3200, 참여율: 2.1 },
-]
+  { type: "블로그", 조회수: 12000, 참여율: 4.2 },
+  { type: "인스타그램", 조회수: 8500, 참여율: 6.8 },
+  { type: "유튜브", 조회수: 15000, 참여율: 3.9 },
+  { type: "전단지", 조회수: 3200, 참여율: 2.1 },
+];
 
 const DashboardPage: React.FC = () => {
-  const cardBg = useColorModeValue('white', 'gray.800')
+  const cardBg = useColorModeValue("white", "gray.800");
 
-  const StatCard = ({ 
-    title, 
-    value, 
-    change, 
-    icon, 
-    isIncrease 
+  const StatCard = ({
+    title,
+    value,
+    change,
+    icon,
+    isIncrease,
   }: {
-    title: string
-    value: string
-    change: string
-    icon: any
-    isIncrease: boolean
+    title: string;
+    value: string;
+    change: string;
+    icon: any;
+    isIncrease: boolean;
   }) => (
     <Card bg={cardBg} shadow="md">
       <CardBody>
         <HStack justify="space-between" mb={2}>
           <Icon as={icon} fontSize="24px" color="brand.500" />
           <Badge
-            colorScheme={isIncrease ? 'green' : 'red'}
+            colorScheme={isIncrease ? "green" : "red"}
             variant="subtle"
             display="flex"
             alignItems="center"
@@ -104,7 +104,7 @@ const DashboardPage: React.FC = () => {
         </VStack>
       </CardBody>
     </Card>
-  )
+  );
 
   return (
     <Box>
@@ -140,9 +140,129 @@ const DashboardPage: React.FC = () => {
             isIncrease={false}
           />
         </SimpleGrid>
+        <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6}>
+          {/* 추천 액션 */}
+          <GridItem>
+            <Card bg={cardBg} shadow="md">
+              <CardBody>
+                <VStack align="stretch" spacing={4}>
+                  <Heading size="md">추천 액션</Heading>
+                  <VStack align="stretch" spacing={3}>
+                    <Box
+                      p={3}
+                      bg="blue.50"
+                      borderRadius="md"
+                      borderLeft="4px"
+                      borderColor="blue.400"
+                    >
+                      <Text fontSize="sm" fontWeight="500" color="blue.800">
+                        20대 여성 고객층 증가 감지
+                      </Text>
+                      <Text fontSize="xs" color="blue.600" mt={1}>
+                        인스타그램 마케팅을 강화하여 이 트렌드를 활용하세요.
+                      </Text>
+                    </Box>
+                    <Box
+                      p={3}
+                      bg="green.50"
+                      borderRadius="md"
+                      borderLeft="4px"
+                      borderColor="green.400"
+                    >
+                      <Text fontSize="sm" fontWeight="500" color="green.800">
+                        점심시간대 방문자 급증
+                      </Text>
+                      <Text fontSize="xs" color="green.600" mt={1}>
+                        점심 메뉴 관련 콘텐츠를 더 많이 생성해보세요.
+                      </Text>
+                    </Box>
+                    <Box
+                      p={3}
+                      bg="orange.50"
+                      borderRadius="md"
+                      borderLeft="4px"
+                      borderColor="orange.400"
+                    >
+                      <Text fontSize="sm" fontWeight="500" color="orange.800">
+                        경쟁사 신규 진입
+                      </Text>
+                      <Text fontSize="xs" color="orange.600" mt={1}>
+                        차별화 전략 수립이 필요합니다.
+                      </Text>
+                    </Box>
+                  </VStack>
+                </VStack>
+              </CardBody>
+            </Card>
+          </GridItem>
 
+          {/* 목표 달성률 */}
+          <GridItem>
+            <Card bg={cardBg} shadow="md">
+              <CardBody>
+                <VStack align="stretch" spacing={4}>
+                  <Heading size="md">이달의 목표</Heading>
+                  <VStack align="stretch" spacing={4}>
+                    <Box>
+                      <HStack justify="space-between" mb={2}>
+                        <Text fontSize="sm">방문자 수</Text>
+                        <Text fontSize="sm" fontWeight="bold">
+                          24,387 / 30,000
+                        </Text>
+                      </HStack>
+                      <Progress
+                        value={81}
+                        colorScheme="blue"
+                        borderRadius="md"
+                      />
+                    </Box>
+                    <Box>
+                      <HStack justify="space-between" mb={2}>
+                        <Text fontSize="sm">전환율</Text>
+                        <Text fontSize="sm" fontWeight="bold">
+                          5.2% / 6.0%
+                        </Text>
+                      </HStack>
+                      <Progress
+                        value={87}
+                        colorScheme="green"
+                        borderRadius="md"
+                      />
+                    </Box>
+                    <Box>
+                      <HStack justify="space-between" mb={2}>
+                        <Text fontSize="sm">콘텐츠 생성</Text>
+                        <Text fontSize="sm" fontWeight="bold">
+                          23 / 25
+                        </Text>
+                      </HStack>
+                      <Progress
+                        value={92}
+                        colorScheme="purple"
+                        borderRadius="md"
+                      />
+                    </Box>
+                    <Box>
+                      <HStack justify="space-between" mb={2}>
+                        <Text fontSize="sm">수익 목표</Text>
+                        <Text fontSize="sm" fontWeight="bold">
+                          ₩1,234,567 / ₩2,000,000
+                        </Text>
+                      </HStack>
+                      <Progress
+                        value={62}
+                        colorScheme="orange"
+                        borderRadius="md"
+                      />
+                    </Box>
+                  </VStack>
+                </VStack>
+              </CardBody>
+            </Card>
+          </GridItem>
+        </Grid>
         {/* 차트 영역 */}
-        <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={6}>
+        <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap={6}>
           {/* 성과 트렌드 */}
           <GridItem>
             <Card bg={cardBg} shadow="md">
@@ -163,7 +283,7 @@ const DashboardPage: React.FC = () => {
                           dataKey="방문자"
                           stroke="#3182ce"
                           strokeWidth={3}
-                          dot={{ fill: '#3182ce', strokeWidth: 2, r: 4 }}
+                          dot={{ fill: "#3182ce", strokeWidth: 2, r: 4 }}
                         />
                         <Line
                           yAxisId="right"
@@ -171,7 +291,7 @@ const DashboardPage: React.FC = () => {
                           dataKey="전환율"
                           stroke="#38a169"
                           strokeWidth={3}
-                          dot={{ fill: '#38a169', strokeWidth: 2, r: 4 }}
+                          dot={{ fill: "#38a169", strokeWidth: 2, r: 4 }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -185,7 +305,7 @@ const DashboardPage: React.FC = () => {
           <GridItem>
             <Card bg={cardBg} shadow="md">
               <CardBody>
-                <VStack align="stretch" spacing={4}>
+                <VStack align="stretch" spacing={1}>
                   <Heading size="md">타겟 고객층</Heading>
                   <Box h="300px">
                     <ResponsiveContainer width="100%" height="100%">
@@ -207,7 +327,7 @@ const DashboardPage: React.FC = () => {
                       </PieChart>
                     </ResponsiveContainer>
                   </Box>
-                  <VStack align="stretch" spacing={2}>
+                  <VStack align="stretch" spacing={1}>
                     {audienceData.map((item, index) => (
                       <HStack key={index} justify="space-between">
                         <HStack>
@@ -217,9 +337,9 @@ const DashboardPage: React.FC = () => {
                             bg={item.color}
                             borderRadius="full"
                           />
-                          <Text fontSize="sm">{item.name}</Text>
+                          <Text fontSize="m">{item.name}</Text>
                         </HStack>
-                        <Text fontSize="sm" fontWeight="bold">
+                        <Text fontSize="l" fontWeight="bold">
                           {item.value}%
                         </Text>
                       </HStack>
@@ -269,96 +389,9 @@ const DashboardPage: React.FC = () => {
         </Card>
 
         {/* 최근 인사이트 */}
-        <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={6}>
-          {/* 추천 액션 */}
-          <GridItem>
-            <Card bg={cardBg} shadow="md">
-              <CardBody>
-                <VStack align="stretch" spacing={4}>
-                  <Heading size="md">추천 액션</Heading>
-                  <VStack align="stretch" spacing={3}>
-                    <Box p={3} bg="blue.50" borderRadius="md" borderLeft="4px" borderColor="blue.400">
-                      <Text fontSize="sm" fontWeight="500" color="blue.800">
-                        20대 여성 고객층 증가 감지
-                      </Text>
-                      <Text fontSize="xs" color="blue.600" mt={1}>
-                        인스타그램 마케팅을 강화하여 이 트렌드를 활용하세요.
-                      </Text>
-                    </Box>
-                    <Box p={3} bg="green.50" borderRadius="md" borderLeft="4px" borderColor="green.400">
-                      <Text fontSize="sm" fontWeight="500" color="green.800">
-                        점심시간대 방문자 급증
-                      </Text>
-                      <Text fontSize="xs" color="green.600" mt={1}>
-                        점심 메뉴 관련 콘텐츠를 더 많이 생성해보세요.
-                      </Text>
-                    </Box>
-                    <Box p={3} bg="orange.50" borderRadius="md" borderLeft="4px" borderColor="orange.400">
-                      <Text fontSize="sm" fontWeight="500" color="orange.800">
-                        경쟁사 신규 진입
-                      </Text>
-                      <Text fontSize="xs" color="orange.600" mt={1}>
-                        차별화 전략 수립이 필요합니다.
-                      </Text>
-                    </Box>
-                  </VStack>
-                </VStack>
-              </CardBody>
-            </Card>
-          </GridItem>
-
-          {/* 목표 달성률 */}
-          <GridItem>
-            <Card bg={cardBg} shadow="md">
-              <CardBody>
-                <VStack align="stretch" spacing={4}>
-                  <Heading size="md">이달의 목표</Heading>
-                  <VStack align="stretch" spacing={4}>
-                    <Box>
-                      <HStack justify="space-between" mb={2}>
-                        <Text fontSize="sm">방문자 수</Text>
-                        <Text fontSize="sm" fontWeight="bold">
-                          24,387 / 30,000
-                        </Text>
-                      </HStack>
-                      <Progress value={81} colorScheme="blue" borderRadius="md" />
-                    </Box>
-                    <Box>
-                      <HStack justify="space-between" mb={2}>
-                        <Text fontSize="sm">전환율</Text>
-                        <Text fontSize="sm" fontWeight="bold">
-                          5.2% / 6.0%
-                        </Text>
-                      </HStack>
-                      <Progress value={87} colorScheme="green" borderRadius="md" />
-                    </Box>
-                    <Box>
-                      <HStack justify="space-between" mb={2}>
-                        <Text fontSize="sm">콘텐츠 생성</Text>
-                        <Text fontSize="sm" fontWeight="bold">
-                          23 / 25
-                        </Text>
-                      </HStack>
-                      <Progress value={92} colorScheme="purple" borderRadius="md" />
-                    </Box>
-                    <Box>
-                      <HStack justify="space-between" mb={2}>
-                        <Text fontSize="sm">수익 목표</Text>
-                        <Text fontSize="sm" fontWeight="bold">
-                          ₩1,234,567 / ₩2,000,000
-                        </Text>
-                      </HStack>
-                      <Progress value={62} colorScheme="orange" borderRadius="md" />
-                    </Box>
-                  </VStack>
-                </VStack>
-              </CardBody>
-            </Card>
-          </GridItem>
-        </Grid>
       </VStack>
     </Box>
-  )
-}
+  );
+};
 
-export default DashboardPage
+export default DashboardPage;

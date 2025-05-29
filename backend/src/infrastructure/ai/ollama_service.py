@@ -6,7 +6,7 @@ import psutil
 import asyncio
 from typing import Dict, Any, List
 import httpx
-from backend.src.application.interfaces.ai_service import AIService
+from application.interfaces.ai_service import AIService
 
 
 class OllamaService(AIService):

@@ -5,7 +5,7 @@ __pycache__/
 *.pyd
 *.env
 *.venv
-venv/
+marknv/
 .env
 *.log
 *.sqlite3
@@ -41,7 +41,11 @@ pip-delete-this-directory.txt
 # Environments
 .env
 .venv
-venv/
+marknv/
 ENV/
 .env.bak
 .env.example
+
+.vscode/
+.idea/
+.DS_Store

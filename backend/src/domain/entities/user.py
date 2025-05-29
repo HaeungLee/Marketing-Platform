@@ -6,7 +6,7 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Optional
 
-from backend.src.domain.value_objects.email import Email
+from domain.value_objects.email import Email
 
 
 @dataclass

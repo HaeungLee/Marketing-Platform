@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 import {
   Box,
   Container,
@@ -12,8 +12,8 @@ import {
   Image,
   useColorModeValue,
   Flex,
-} from '@chakra-ui/react'
-import { Link as RouterLink } from 'react-router-dom'
+} from "@chakra-ui/react";
+import { Link as RouterLink } from "react-router-dom";
 import {
   FiTarget,
   FiTrendingUp,
@@ -21,46 +21,49 @@ import {
   FiBarChart,
   FiUsers,
   FiZap,
-} from 'react-icons/fi'
+} from "react-icons/fi";
 
 const features = [
   {
     icon: FiTarget,
-    title: '타겟 고객 분석',
-    description: '공공데이터 기반으로 정확한 타겟 고객층을 분석하고 시각화합니다.',
+    title: "타겟 고객 분석",
+    description:
+      "공공데이터 기반으로 정확한 타겟 고객층을 분석하고 시각화합니다.",
   },
   {
     icon: FiEdit3,
-    title: 'AI 콘텐츠 생성',
-    description: '블로그, 인스타그램, 유튜브, 전단지용 마케팅 콘텐츠를 자동 생성합니다.',
+    title: "AI 콘텐츠 생성",
+    description:
+      "블로그, 인스타그램, 유튜브, 전단지용 마케팅 콘텐츠를 자동 생성합니다.",
   },
   {
     icon: FiBarChart,
-    title: '경쟁사 분석',
-    description: '주변 경쟁업체를 분석하여 차별화 전략을 제시합니다.',
+    title: "경쟁사 분석",
+    description: "주변 경쟁업체를 분석하여 차별화 전략을 제시합니다.",
   },
   {
     icon: FiTrendingUp,
-    title: '트렌드 분석',
-    description: '업종별 검색 트렌드와 시장 동향을 실시간으로 분석합니다.',
+    title: "트렌드 분석",
+    description: "업종별 검색 트렌드와 시장 동향을 실시간으로 분석합니다.",
   },
   {
     icon: FiUsers,
-    title: '고객 인사이트',
-    description: '고객 행동 패턴과 선호도를 분석하여 마케팅 전략을 최적화합니다.',
+    title: "고객 인사이트",
+    description:
+      "고객 행동 패턴과 선호도를 분석하여 마케팅 전략을 최적화합니다.",
   },
   {
     icon: FiZap,
-    title: '자동화 시스템',
-    description: '반복적인 마케팅 업무를 자동화하여 효율성을 극대화합니다.',
+    title: "자동화 시스템",
+    description: "반복적인 마케팅 업무를 자동화하여 효율성을 극대화합니다.",
   },
-]
+];
 
 const HomePage: React.FC = () => {
   const bgGradient = useColorModeValue(
-    'linear(to-br, brand.50, blue.50, purple.50)',
-    'linear(to-br, gray.900, blue.900, purple.900)'
-  )
+    "linear(to-br, brand.50, blue.50, purple.50)",
+    "linear(to-br, gray.900, blue.900, purple.900)"
+  );
 
   return (
     <Box minH="100vh" bg={bgGradient}>
@@ -97,8 +100,8 @@ const HomePage: React.FC = () => {
               소상공인을 위한 스마트 마케팅
             </Heading>
             <Text fontSize="xl" color="gray.600" maxW="600px">
-              AI와 공공데이터를 활용하여 효과적인 마케팅 콘텐츠를 생성하고,
-              타겟 고객을 정확히 분석하는 올인원 플랫폼입니다.
+              AI와 공공데이터를 활용하여 효과적인 마케팅 콘텐츠를 생성하고, 타겟
+              고객을 정확히 분석하는 올인원 플랫폼입니다.
             </Text>
           </Box>
 
@@ -163,8 +166,8 @@ const HomePage: React.FC = () => {
                   borderRadius="xl"
                   boxShadow="lg"
                   _hover={{
-                    transform: 'translateY(-4px)',
-                    boxShadow: 'xl',
+                    transform: "translateY(-4px)",
+                    boxShadow: "xl",
                   }}
                   transition="all 0.3s"
                   className="fade-in"
@@ -198,7 +201,8 @@ const HomePage: React.FC = () => {
               지금 바로 시작해보세요
             </Heading>
             <Text fontSize="lg" color="gray.600">
-              복잡한 설정 없이 5분 만에 첫 번째 마케팅 콘텐츠를 생성할 수 있습니다.
+              복잡한 설정 없이 5분 만에 첫 번째 마케팅 콘텐츠를 생성할 수
+              있습니다.
             </Text>
             <Button
               as={RouterLink}
@@ -219,11 +223,11 @@ const HomePage: React.FC = () => {
           <Flex
             justify="space-between"
             align="center"
-            direction={{ base: 'column', md: 'row' }}
+            direction={{ base: "column", md: "row" }}
             gap={4}
           >
             <Text fontSize="sm">
-              © 2024 AI 마케팅 플랫폼. 공모전용 프로토타입입니다.
+              © 2025 AI 마케팅 플랫폼. 공모전 프로토타입입니다.
             </Text>
             <HStack spacing={4}>
               <Text fontSize="sm" color="gray.400">
@@ -234,7 +238,7 @@ const HomePage: React.FC = () => {
         </Container>
       </Box>
     </Box>
-  )
-}
+  );
+};
 
-export default HomePage
+export default HomePage;

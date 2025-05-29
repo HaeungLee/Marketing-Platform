@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 import {
   Box,
   Flex,
@@ -12,12 +12,12 @@ import {
   MenuDivider,
   Badge,
   useColorModeValue,
-} from '@chakra-ui/react'
-import { FiBell, FiChevronDown, FiUser, FiLogOut } from 'react-icons/fi'
+} from "@chakra-ui/react";
+import { FiBell, FiChevronDown, FiUser, FiLogOut } from "react-icons/fi";
 
 const Header: React.FC = () => {
-  const bg = useColorModeValue('white', 'gray.800')
-  const borderColor = useColorModeValue('gray.200', 'gray.700')
+  const bg = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.200", "gray.700");
 
   return (
     <Box
@@ -32,7 +32,7 @@ const Header: React.FC = () => {
         {/* 페이지 타이틀 */}
         <Box>
           <Text fontSize="2xl" fontWeight="bold" color="gray.800">
-            대시보드
+            대시 보드
           </Text>
           <Text fontSize="sm" color="gray.500">
             비즈니스 성과와 인사이트를 한눈에 확인하세요
@@ -95,7 +95,7 @@ const Header: React.FC = () => {
         </Flex>
       </Flex>
     </Box>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;
