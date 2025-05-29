@@ -116,12 +116,22 @@ venv\Scripts\activate  # Windows
 # 의존성 설치
 pip install -r requirements.txt
 
+backend의 .env 파일 생성 및 설정
+KAKAO_MAP_API_KEY=your-kakao-map-api-key
+NAVER_CLIENT_ID=your-naver-client-id
+NAVER_CLIENT_SECRET=your-naver-client-secret
+KAKAO_CLIENT_ID=your-kakao-client-id
+GOOGLE_CLIENT_ID=your-google-client-id
+# Ollama 설정
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODELS=gemma3:1b
+
 # 서버 실행
 python run.py
 ```
 
-백엔드 서버가 http://localhost:8000 에서 실행됩니다.
-확인하는법:
+백엔드 서버가 http://localhost:8000 에서 실행
+서버 API 확인:
 Swagger UI: http://localhost:8000/docs
 ReDoc: http://localhost:8000/redoc
 
@@ -138,7 +148,7 @@ npm install
 npm run dev
 ```
 
-프론트엔드 서버가 http://localhost:5173 에서 실행됩니다.
+프론트엔드 서버가 http://localhost:3000 에서 실행
 
 ### 테스트 실행
 
@@ -156,7 +166,7 @@ npm test
 
 ### 환경 변수
 
-백엔드의 `src/config/settings.py`에서 다음 설정을 확인하세요:
+백엔드의 `src/config/settings.py`에서 다음 설정을 확인:
 
 - `OLLAMA_BASE_URL`: Ollama 서버 주소 (기본: http://localhost:11434)
 - `CORS_ORIGINS`: CORS 허용 도메인
@@ -164,11 +174,11 @@ npm test
 
 ### AI 모델 설정
 
-Ollama를 사용하여 로컬 LLM을 실행해야 합니다:
+Ollama를 사용하여 로컬 LLM을 실행:
 
 ```bash
 # Ollama 설치 후
-ollama pull llama2  # 또는 다른 모델
+ollama pull gemma3  # 또는 다른 모델
 ollama serve
 ```
 
