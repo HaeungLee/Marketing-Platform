@@ -12,18 +12,15 @@ from infrastructure.ai.ollama_service import OllamaService
 
 def create_app() -> FastAPI:
     """FastAPI 애플리케이션 생성"""
-    
     app = FastAPI(
         title=settings.app_name,
         description="소상공인을 위한 AI 마케팅 플랫폼 API",
         version="1.0.0",
         debug=settings.debug
-    )
-    
-    # CORS 미들웨어 설정
+    )    # CORS 미들웨어 설정
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=["*"],  # 개발 환경에서는 모든 출처 허용
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

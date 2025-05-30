@@ -32,10 +32,9 @@ class Settings(BaseSettings):
     naver_client_secret: Optional[str] = None
     kakao_client_id: Optional[str] = None
     google_client_id: Optional[str] = None
-    
-    # Ollama 설정
+      # Ollama 설정
     ollama_base_url: str = "http://localhost:11434"
-    ollama_models: str = "gemma3:1b"
+    ollama_models: str = "gemma3:1b"  # Currently using 1b model as 4b is not yet available
     
     # 이메일 설정
     smtp_host: Optional[str] = None
