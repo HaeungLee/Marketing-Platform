@@ -270,12 +270,40 @@ const DashboardPage: React.FC = () => {
                 <VStack align="stretch" spacing={4}>
                   <Heading size="md">성과 트렌드</Heading>
                   <Box h="300px">
+                    {" "}
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={performanceData}>
+                      <LineChart
+                        data={performanceData}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 35 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis yAxisId="left" />
-                        <YAxis yAxisId="right" orientation="right" />
+                        <XAxis
+                          dataKey="month"
+                          label={{
+                            value: "월별",
+                            position: "bottom",
+                            offset: 20,
+                          }}
+                        />
+                        <YAxis
+                          yAxisId="left"
+                          label={{
+                            value: "방문자 수",
+                            angle: -90,
+                            position: "insideLeft",
+                            offset: -5,
+                          }}
+                        />
+                        <YAxis
+                          yAxisId="right"
+                          orientation="right"
+                          label={{
+                            value: "전환율 (%)",
+                            angle: 90,
+                            position: "insideRight",
+                            offset: 10,
+                          }}
+                        />
                         <Tooltip />
                         <Line
                           yAxisId="left"
@@ -363,11 +391,39 @@ const DashboardPage: React.FC = () => {
               </HStack>
               <Box h="250px">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={contentPerformance}>
+                  {" "}
+                  <BarChart
+                    data={contentPerformance}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 35 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="type" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
+                    <XAxis
+                      dataKey="type"
+                      label={{
+                        value: "콘텐츠 유형",
+                        position: "bottom",
+                        offset: 20,
+                      }}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      label={{
+                        value: "조회수",
+                        angle: -90,
+                        position: "insideLeft",
+                        offset: -5,
+                      }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      label={{
+                        value: "참여율 (%)",
+                        angle: 90,
+                        position: "insideRight",
+                        offset: 10,
+                      }}
+                    />
                     <Tooltip />
                     <Bar
                       yAxisId="left"
