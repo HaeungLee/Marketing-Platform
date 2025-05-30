@@ -9,7 +9,7 @@ marknv/
 .env
 *.log
 *.sqlite3
-
+venv/
 # Byte-compiled / optimized / DLL files
 *.pyc
 *.pyo
