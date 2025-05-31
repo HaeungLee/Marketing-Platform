@@ -1,57 +1,35 @@
 from logging.config import fileConfig
+import sys
+import os
+from pathlib import Path
+
+# Add src directory to Python path
+src_path = str(Path(__file__).parent.parent.absolute())
+sys.path.append(src_path)
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
 from alembic import context
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-from sqlalchemy import MetaData
-from sqlalchemy.ext.declarative import declarative_base
-
-# User 모델 import
-from domain.entities.user import User
-
-# SQLAlchemy Base 및 메타데이터 설정
-Base = declarative_base()
-
-# 여기에 User 테이블에 맞는 SQLAlchemy ORM 모델을 정의해야 함
-from sqlalchemy import Column, String, Boolean, DateTime
-import datetime
-
-class UserModel(Base):
-    __tablename__ = 'user'
-    id = Column(String, primary_key=True)
-    email = Column(String, unique=True, nullable=False)
-    username = Column(String(50), nullable=False)
-    hashed_password = Column(String, nullable=False)
-    is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
-    social_provider = Column(String, nullable=True)
-    social_id = Column(String, nullable=True)
+# 모델 import
+from domain.entities.user import User, BusinessProfile
+from domain.entities.user_type import UserType
+from config.database import Base
+from config.settings import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# DB URL 설정 덮어쓰기
+config.set_main_option("sqlalchemy.url", settings.sync_database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
 
 
 def run_migrations_offline() -> None:

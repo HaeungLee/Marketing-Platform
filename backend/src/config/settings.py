@@ -13,24 +13,35 @@ class Settings(BaseSettings):
     debug: bool = True
     log_level: str = "INFO"
     
+    # 모니터링 설정
+    discord_webhook_url: Optional[str] = None
+    memory_threshold: int = 90
+    cpu_threshold: int = 80
+    error_threshold: int = 10
+    
     # PostgreSQL 설정
     postgres_user: str = "postgres"
     postgres_password: str = "human1234"
     postgres_host: str = "localhost"
     postgres_port: str = "5432"
     postgres_db: str = "marketing_platform"
-    
-    # MCP 설정
+
+    # PostgreSQL 연결 풀 설정
     mcp_min_connections: int = 5
     mcp_max_connections: int = 20
     mcp_pool_timeout: int = 30
     mcp_pool_recycle: int = 1800
     
-    # 데이터베이스 URL
+    # 데이터베이스 URL (비동기)
     @property
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-    
+
+    # 데이터베이스 URL (동기식)
+    @property
+    def sync_database_url(self) -> str:
+        return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+
     # Redis 설정
     redis_url: str = "redis://localhost:6379/0"
     
@@ -55,10 +66,27 @@ class Settings(BaseSettings):
     ollama_models: str = "gemma3:1b"
     
     # 이메일 설정
-    smtp_host: Optional[str] = None
+    smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
-    smtp_user: Optional[str] = None
-    smtp_password: Optional[str] = None
+    smtp_user: str= "sghnyyj@gmail.com"
+    smtp_password: str = "ypai nsup rkxf pxem"
+    
+    # SendGrid 설정
+    sendgrid_api_key: Optional[str] = None
+    
+    # 데이터베이스 설정
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/marketing_platform"
+    
+    # 이메일 설정
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = "your-email@gmail.com"
+    SMTP_PASSWORD: str = "your-app-password"
+    
+    # Redis 설정
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
     
     class Config:
         env_file = ".env"

@@ -74,15 +74,26 @@ const HomePage: React.FC = () => {
             <Text fontSize="xl" fontWeight="bold" color="brand.600">
               🚀 AI 마케팅 플랫폼
             </Text>
-            <Button
-              as={RouterLink}
-              to="/app"
-              colorScheme="brand"
-              size="sm"
-              variant="solid"
-            >
-              시작하기
-            </Button>
+            <HStack spacing={4}>
+              <Button
+                as={RouterLink}
+                to="/register"
+                colorScheme="brand"
+                size="sm"
+                variant="outline"
+              >
+                회원가입
+              </Button>
+              <Button
+                as={RouterLink}
+                to="/app"
+                colorScheme="brand"
+                size="sm"
+                variant="solid"
+              >
+                시작하기
+              </Button>
+            </HStack>
           </Flex>
         </Container>
       </Box>

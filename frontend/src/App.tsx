@@ -8,18 +8,21 @@ import BusinessSetupPage from './pages/BusinessSetupPage'
 import ContentGeneratorPage from './pages/ContentGeneratorPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import SettingsPage from './pages/SettingsPage'
+import RegisterPage from './pages/RegisterPage'
 
 function App() {
   return (
     <Box minH="100vh">
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/app" element={<Layout />}>
           <Route index element={<DashboardPage />} />
-          <Route path="business/setup" element={<BusinessSetupPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           <Route path="content" element={<ContentGeneratorPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="business-setup" element={<BusinessSetupPage />} />
         </Route>
       </Routes>
     </Box>
