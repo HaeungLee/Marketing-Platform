@@ -12,6 +12,7 @@ import {
   Image,
   useColorModeValue,
   Flex,
+  Stack,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import {
@@ -74,26 +75,35 @@ const HomePage: React.FC = () => {
             <Text fontSize="xl" fontWeight="bold" color="brand.600">
               🚀 AI 마케팅 플랫폼
             </Text>
-            <HStack spacing={4}>
+            <Stack direction={{ base: "column", md: "row" }} spacing={4}>
               <Button
                 as={RouterLink}
-                to="/register"
-                colorScheme="brand"
-                size="sm"
+                to="/login"
+                size="lg"
                 variant="outline"
+                colorScheme="blue"
+                px={8}
+                _hover={{
+                  transform: "translateY(-2px)",
+                  boxShadow: "lg",
+                }}
               >
-                회원가입
+                로그인
               </Button>
               <Button
                 as={RouterLink}
                 to="/app"
-                colorScheme="brand"
-                size="sm"
-                variant="solid"
+                size="lg"
+                colorScheme="blue"
+                px={8}
+                _hover={{
+                  transform: "translateY(-2px)",
+                  boxShadow: "lg",
+                }}
               >
                 시작하기
               </Button>
-            </HStack>
+            </Stack>
           </Flex>
         </Container>
       </Box>

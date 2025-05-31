@@ -23,9 +23,15 @@ import {
 import { useForm } from "react-hook-form";
 import { useNavigate, Link as RouterLink, useSearchParams } from "react-router-dom";
 import { FiEye, FiEyeOff, FiArrowLeft } from "react-icons/fi";
-import { apiService } from "../services/apiService";
+import { authApi } from "../services/apiService";
 
-export const ForgotPasswordPage = () => {
+interface ForgotPasswordFormData {
+  email: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
+const ForgotPasswordPage = () => {
   const [searchParams] = useSearchParams();
   const resetToken = searchParams.get("token");
   const [showPassword, setShowPassword] = useState(false);
@@ -42,26 +48,26 @@ export const ForgotPasswordPage = () => {
     handleSubmit,
     formState: { errors },
     watch,
-  } = useForm();
+  } = useForm<ForgotPasswordFormData>();
 
   const password = watch("password");
 
-  const handleForgotPassword = async (data) => {
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsSubmitting(true);
     try {
-      await apiService.post("/auth/forgot-password", { email: data.email });
+      await authApi.forgotPassword(data.email);
       toast({
-        title: "이메일 발송 완료",
-        description: "비밀번호 재설정 링크가 이메일로 발송되었습니다.",
+        title: "이메일 전송 완료",
+        description: "비밀번호 재설정 링크가 이메일로 전송되었습니다.",
         status: "success",
         duration: 5000,
         isClosable: true,
       });
-      navigate("/login");
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "이메일 전송에 실패했습니다.";
       toast({
-        title: "이메일 발송 실패",
-        description: "비밀번호 재설정 이메일 발송에 실패했습니다.",
+        title: "이메일 전송 실패",
+        description: errorMessage,
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -71,7 +77,9 @@ export const ForgotPasswordPage = () => {
     }
   };
 
-  const handleResetPassword = async (data) => {
+  const handleResetPassword = async (data: ForgotPasswordFormData) => {
+    if (!data.password || !data.confirmPassword) return;
+    
     if (data.password !== data.confirmPassword) {
       toast({
         title: "비밀번호 불일치",
@@ -85,10 +93,7 @@ export const ForgotPasswordPage = () => {
 
     setIsSubmitting(true);
     try {
-      await apiService.post("/auth/reset-password", {
-        token: resetToken,
-        new_password: data.password,
-      });
+      await authApi.resetPassword(resetToken!, data.password);
       toast({
         title: "비밀번호 재설정 완료",
         description: "비밀번호가 성공적으로 재설정되었습니다.",
@@ -131,7 +136,7 @@ export const ForgotPasswordPage = () => {
               {resetToken ? (
                 <form onSubmit={handleSubmit(handleResetPassword)}>
                   <VStack spacing={4}>
-                    <FormControl isRequired isInvalid={errors.password}>
+                    <FormControl isRequired isInvalid={!!errors.password}>
                       <FormLabel>새 비밀번호</FormLabel>
                       <InputGroup>
                         <Input
@@ -161,7 +166,7 @@ export const ForgotPasswordPage = () => {
                       <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
                     </FormControl>
 
-                    <FormControl isRequired isInvalid={errors.confirmPassword}>
+                    <FormControl isRequired isInvalid={!!errors.confirmPassword}>
                       <FormLabel>비밀번호 확인</FormLabel>
                       <InputGroup>
                         <Input
@@ -190,9 +195,9 @@ export const ForgotPasswordPage = () => {
                   </VStack>
                 </form>
               ) : (
-                <form onSubmit={handleSubmit(handleForgotPassword)}>
+                <form onSubmit={handleSubmit(onSubmit)}>
                   <VStack spacing={4}>
-                    <FormControl isRequired isInvalid={errors.email}>
+                    <FormControl isRequired isInvalid={!!errors.email}>
                       <FormLabel>이메일</FormLabel>
                       <Input
                         type="email"
@@ -239,4 +244,6 @@ export const ForgotPasswordPage = () => {
       </Container>
     </Box>
   );
-}; 
+};
+
+export default ForgotPasswordPage; 

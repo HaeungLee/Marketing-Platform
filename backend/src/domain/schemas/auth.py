@@ -29,7 +29,7 @@ class BusinessUserRegister(UserRegisterBase):
 
 # 로그인 요청 모델
 class LoginRequest(BaseModel):
-    email: EmailStr
+    user_id: str = Field(..., min_length=4, max_length=20)
     password: str
 
 # 토큰 응답 모델

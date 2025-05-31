@@ -10,6 +10,7 @@ from pydantic import BaseModel, ValidationError
 import uuid
 import logging
 import json
+import httpx
 
 from domain.schemas.auth import (
     PersonalUserRegister,
@@ -221,14 +222,14 @@ async def login(
 ):
     """로그인"""
     try:
-        logger.info(f"로그인 시도: {login_data.email}")
+        logger.info(f"로그인 시도: {login_data.user_id}")
         
-        user = db.query(User).filter(User.email == login_data.email).first()
+        user = db.query(User).filter(User.id == login_data.user_id).first()
         if not user or not verify_password(login_data.password, user.hashed_password):
-            logger.warning(f"로그인 실패: {login_data.email}")
+            logger.warning(f"로그인 실패: {login_data.user_id}")
             raise HTTPException(
                 status_code=401,
-                detail="이메일 또는 비밀번호가 올바르지 않습니다."
+                detail="아이디 또는 비밀번호가 올바르지 않습니다."
             )
         
         access_token = create_access_token(
@@ -411,4 +412,109 @@ async def reset_password(
         return format_error_response(e)
     except Exception as e:
         logger.error(f"비밀번호 재설정 중 오류 발생: {str(e)}")
+        return format_error_response(e)
+
+
+@router.get("/social/naver/url")
+async def get_naver_login_url():
+    """네이버 로그인 URL 가져오기"""
+    try:
+        if not settings.naver_client_id or not settings.naver_client_secret:
+            raise HTTPException(
+                status_code=500,
+                detail="네이버 API 설정이 완료되지 않았습니다."
+            )
+        
+        # 네이버 로그인 URL 생성
+        callback_url = "http://localhost:3000/auth/callback/naver"  # 프론트엔드의 콜백 URL
+        state = secrets.token_urlsafe(16)  # CSRF 방지를 위한 상태 토큰
+        
+        authorize_url = f"https://nid.naver.com/oauth2.0/authorize"
+        params = {
+            "response_type": "code",
+            "client_id": settings.naver_client_id,
+            "redirect_uri": callback_url,
+            "state": state
+        }
+        
+        url = f"{authorize_url}?response_type=code&client_id={settings.naver_client_id}&redirect_uri={callback_url}&state={state}"
+        return {"url": url, "state": state}
+        
+    except Exception as e:
+        logger.error(f"네이버 로그인 URL 생성 중 오류: {str(e)}")
+        return format_error_response(e)
+
+@router.post("/social/naver/callback")
+async def naver_login_callback(
+    code: str,
+    state: str,
+    db: Session = Depends(get_db)
+):
+    """네이버 로그인 콜백 처리"""
+    try:
+        # 액세스 토큰 요청
+        token_url = "https://nid.naver.com/oauth2.0/token"
+        callback_url = "http://localhost:3000/auth/callback/naver"
+        
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(token_url, data={
+                "grant_type": "authorization_code",
+                "client_id": settings.naver_client_id,
+                "client_secret": settings.naver_client_secret,
+                "code": code,
+                "state": state,
+                "redirect_uri": callback_url
+            })
+            
+            token_data = token_response.json()
+            if "error" in token_data:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"네이버 토큰 획득 실패: {token_data['error']}"
+                )
+            
+            # 사용자 정보 요청
+            user_info_response = await client.get(
+                "https://openapi.naver.com/v1/nid/me",
+                headers={"Authorization": f"Bearer {token_data['access_token']}"}
+            )
+            
+            user_info = user_info_response.json()
+            if user_info.get("resultcode") != "00":
+                raise HTTPException(
+                    status_code=400,
+                    detail="네이버 사용자 정보 획득 실패"
+                )
+                
+            naver_account = user_info["response"]
+            
+            # 기존 사용자 확인 또는 새 사용자 생성
+            user = db.query(User).filter(User.email == naver_account["email"]).first()
+            if not user:
+                user = User(
+                    id=str(uuid.uuid4()),
+                    email=naver_account["email"],
+                    username=naver_account["nickname"],
+                    user_type=UserType.PERSONAL,
+                    social_provider="naver",
+                    social_id=naver_account["id"]
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            
+            # 액세스 토큰 생성
+            access_token = create_access_token(
+                data={"sub": user.id, "user_type": user.user_type.value}
+            )
+            
+            return Token(
+                access_token=access_token,
+                token_type="bearer",
+                user_id=user.id,
+                user_type=user.user_type
+            )
+            
+    except Exception as e:
+        logger.error(f"네이버 로그인 콜백 처리 중 오류: {str(e)}")
         return format_error_response(e)

@@ -192,11 +192,29 @@ export const authApi = {
     const response = await apiClient.post("/auth/register/business", data);
     return response.data;
   },
-
   // 로그인
-  login: async (email: string, password: string) => {
-    const response = await apiClient.post("/auth/login", { email, password });
-    return response.data;
+  login: async (userId: string, password: string) => {
+    const requestData = {
+      user_id: userId,
+      password: password,
+    };
+    console.log(
+      "Sending login request with:",
+      JSON.stringify(requestData, null, 2)
+    ); // 디버깅용 로그
+    try {
+      const response = await apiClient.post("/auth/login", requestData);
+      console.log("Login response:", response.data); // 디버깅용 로그
+      return response.data;
+    } catch (error: any) {
+      console.error("Login request failed:", {
+        requestData,
+        error: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers,
+      });
+      throw error;
+    }
   },
 
   // 사용자 정보 가져오기
@@ -207,13 +225,33 @@ export const authApi = {
 
   // 이메일 인증 메일 발송
   sendVerificationEmail: async (email: string) => {
-    const response = await apiClient.post("/auth/send-verification-email", { email });
+    const response = await apiClient.post("/auth/send-verification-email", {
+      email,
+    });
     return response.data;
   },
 
   // 이메일 인증 코드 확인
   verifyEmail: async (email: string, code: string) => {
-    const response = await apiClient.post("/auth/verify-email", { email, code });
+    const response = await apiClient.post("/auth/verify-email", {
+      email,
+      code,
+    });
+    return response.data;
+  },
+
+  // 비밀번호 찾기 이메일 발송
+  forgotPassword: async (email: string) => {
+    const response = await apiClient.post("/auth/forgot-password", { email });
+    return response.data;
+  },
+
+  // 비밀번호 재설정
+  resetPassword: async (token: string, newPassword: string) => {
+    const response = await apiClient.post("/auth/reset-password", {
+      token,
+      new_password: newPassword,
+    });
     return response.data;
   },
 };
