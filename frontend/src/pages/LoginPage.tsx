@@ -63,14 +63,8 @@ const LoginPage = () => {
         status: "success",
         duration: 3000,
         isClosable: true,
-      });
-
-      // 사용자 타입에 따라 다른 페이지로 리다이렉트
-      if (response.user_type === "BUSINESS") {
-        navigate("/business/dashboard");
-      } else {
-        navigate("/dashboard");
-      }
+      }); // 로그인 성공 시 /app으로 리다이렉트
+      navigate("/app");
     } catch (error: any) {
       console.error("Login error details:", {
         data: error.response?.data,

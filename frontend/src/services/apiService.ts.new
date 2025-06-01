@@ -7,6 +7,7 @@ import type {
   DashboardData,
 } from "../types/api";
 
+// 인증 관련 API
 export const authApi = {
   // 소셜 로그인 URL 조회
   getSocialLoginUrl: async (provider: string) => {
@@ -15,22 +16,18 @@ export const authApi = {
   },
 
   // 소셜 로그인 콜백 처리
-  handleSocialCallback: async (
-    provider: string,
-    code: string,
-    state: string
-  ) => {
-    console.log("Sending social callback request:", { provider, code, state });
+  handleSocialCallback: async (provider: string, code: string, state: string) => {
+    console.log('Sending social callback request:', { provider, code, state });
     const response = await apiClient.post(
       `/auth/social/${provider}/callback`,
       {
         code: code,
-        state: state,
+        state: state
       },
       {
         headers: {
-          "Content-Type": "application/json",
-        },
+          'Content-Type': 'application/json'
+        }
       }
     );
     return response.data;
@@ -77,25 +74,9 @@ export const authApi = {
     const response = await apiClient.post("/auth/register/business", data);
     return response.data;
   },
-
-  // 이메일 인증 코드 전송
-  sendVerificationEmail: async (email: string) => {
-    const response = await apiClient.post("/auth/verify-email/send", {
-      email: email,
-    });
-    return response.data;
-  },
-
-  // 이메일 인증 코드 확인
-  verifyEmail: async (email: string, code: string) => {
-    const response = await apiClient.post("/auth/verify-email/verify", {
-      email: email,
-      code: code,
-    });
-    return response.data;
-  },
 };
 
+// 비즈니스 관련 API
 export const businessApi = {
   // 업종 카테고리 조회
   getCategories: async () => {
@@ -122,16 +103,16 @@ export const businessApi = {
   },
 };
 
+// 콘텐츠 생성 관련 API
 export const contentApi = {
   // 콘텐츠 생성
-  generateContent: async (
-    data: ContentGenerationRequest
-  ): Promise<ContentGenerationResponse> => {
+  generateContent: async (data: ContentGenerationRequest): Promise<ContentGenerationResponse> => {
     const response = await apiClient.post("/content/generate", data);
     return response.data;
   },
 };
 
+// 분석 관련 API
 export const analysisApi = {
   // 타겟 고객층 분석
   analyzeTargetAudience: async (data: {

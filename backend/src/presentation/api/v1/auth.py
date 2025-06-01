@@ -426,35 +426,38 @@ async def get_naver_login_url():
             )
         
         # 네이버 로그인 URL 생성
-        callback_url = "http://localhost:3000/auth/callback/naver"  # 프론트엔드의 콜백 URL
+        frontend_callback_url = "http://localhost:3000/auth/callback/naver"  # 프론트엔드의 콜백 URL
         state = secrets.token_urlsafe(16)  # CSRF 방지를 위한 상태 토큰
         
         authorize_url = f"https://nid.naver.com/oauth2.0/authorize"
         params = {
             "response_type": "code",
             "client_id": settings.naver_client_id,
-            "redirect_uri": callback_url,
+            "redirect_uri": frontend_callback_url,
             "state": state
         }
         
-        url = f"{authorize_url}?response_type=code&client_id={settings.naver_client_id}&redirect_uri={callback_url}&state={state}"
+        url = f"{authorize_url}?response_type=code&client_id={settings.naver_client_id}&redirect_uri={frontend_callback_url}&state={state}"
         return {"url": url, "state": state}
         
     except Exception as e:
         logger.error(f"네이버 로그인 URL 생성 중 오류: {str(e)}")
         return format_error_response(e)
 
+from fastapi import Body
+
 @router.post("/social/naver/callback")
 async def naver_login_callback(
-    code: str,
-    state: str,
+    code: str = Body(...),
+    state: str = Body(...),
     db: Session = Depends(get_db)
 ):
     """네이버 로그인 콜백 처리"""
+    logger.info(f"네이버 로그인 콜백 - code: {code}, state: {state}")
     try:
         # 액세스 토큰 요청
         token_url = "https://nid.naver.com/oauth2.0/token"
-        callback_url = "http://localhost:3000/auth/callback/naver"
+        frontend_callback_url = "http://localhost:3000/auth/callback/naver"
         
         async with httpx.AsyncClient() as client:
             token_response = await client.post(token_url, data={
@@ -463,7 +466,7 @@ async def naver_login_callback(
                 "client_secret": settings.naver_client_secret,
                 "code": code,
                 "state": state,
-                "redirect_uri": callback_url
+                "redirect_uri": frontend_callback_url
             })
             
             token_data = token_response.json()

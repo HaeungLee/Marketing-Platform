@@ -10,13 +10,16 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
+import AuthCallbackPage from "./pages/AuthCallbackPage";
 
 function App() {
   return (
     <Box minH="100vh">
+      {" "}
       <Routes>
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/callback/:provider" element={<AuthCallbackPage />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/app" element={<Layout />}>
           <Route index element={<DashboardPage />} />
