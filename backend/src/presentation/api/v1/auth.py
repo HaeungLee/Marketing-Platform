@@ -242,6 +242,8 @@ async def login(
             access_token=access_token,
             token_type="bearer",
             user_id=user.id,
+            email=user.email,
+            username=user.username,
             user_type=user.user_type
         )
         

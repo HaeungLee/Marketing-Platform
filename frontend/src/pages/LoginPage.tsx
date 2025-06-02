@@ -50,12 +50,12 @@ const LoginPage = () => {
     console.log("Form data:", JSON.stringify(data, null, 2)); // 디버깅용 로그
     try {
       const response = await authApi.login(data.user_id, data.password);
-      console.log("Login response:", response); // 디버깅용 로그
-
-      // 토큰을 로컬 스토리지에 저장
+      console.log("Login response:", response); // 디버깅용 로그      // 토큰과 사용자 정보를 저장
       localStorage.setItem("access_token", response.access_token);
       localStorage.setItem("user_id", response.user_id);
       localStorage.setItem("user_type", response.user_type);
+      localStorage.setItem("user_email", response.email);
+      localStorage.setItem("username", response.username);
 
       toast({
         title: "로그인 성공",

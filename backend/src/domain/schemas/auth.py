@@ -37,6 +37,8 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user_id: str
+    email: str
+    username: str
     user_type: UserType
 
 # 사용자 응답 모델

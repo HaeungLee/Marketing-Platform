@@ -14,8 +14,10 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import { FiBell, FiChevronDown, FiUser, FiLogOut } from "react-icons/fi";
+import { useAuth } from "../contexts/AuthContext";
 
 const Header: React.FC = () => {
+  const { isAuthenticated, username, userEmail, userType, logout } = useAuth();
   const bg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
@@ -72,24 +74,46 @@ const Header: React.FC = () => {
               rightIcon={<FiChevronDown />}
               size="sm"
             >
+              {" "}
               <Flex align="center" gap={3}>
-                <Avatar size="sm" name="데모 사용자" />
+                <Avatar size="sm" name={username || "게스트"} />
                 <Box textAlign="left">
                   <Text fontSize="sm" fontWeight="500">
-                    데모 사용자
+                    {username || "게스트"}
                   </Text>
                   <Text fontSize="xs" color="gray.500">
-                    demo@example.com
+                    {userEmail || "로그인이 필요합니다"}
                   </Text>
+                  {userType && (
+                    <Text fontSize="xs" color="blue.500">
+                      {userType === "BUSINESS" ? "사업자" : "개인"} 회원
+                    </Text>
+                  )}
                 </Box>
               </Flex>
             </MenuButton>
             <MenuList>
-              <MenuItem icon={<FiUser />}>프로필 설정</MenuItem>
-              <MenuDivider />
-              <MenuItem icon={<FiLogOut />} color="red.500">
-                로그아웃
-              </MenuItem>
+              {" "}
+              {isAuthenticated ? (
+                <>
+                  <MenuItem icon={<FiUser />}>프로필 설정</MenuItem>
+                  <MenuDivider />
+                  <MenuItem
+                    icon={<FiLogOut />}
+                    color="red.500"
+                    onClick={logout}
+                  >
+                    로그아웃
+                  </MenuItem>
+                </>
+              ) : (
+                <MenuItem
+                  icon={<FiUser />}
+                  onClick={() => (window.location.href = "/login")}
+                >
+                  로그인
+                </MenuItem>
+              )}
             </MenuList>
           </Menu>
         </Flex>
