@@ -1,10 +1,15 @@
 """
 FastAPI 메인 애플리케이션
 """
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import logging
+
+# 환경 변수 로드
+load_dotenv()
 
 from config.settings import settings
 from presentation.api.v1 import auth, business, content, analysis
@@ -25,7 +30,7 @@ def create_app() -> FastAPI:
     """FastAPI 애플리케이션 생성"""
     app = FastAPI(
         title=settings.app_name,
-        description="소상공인을 위한 AI 마케팅 플랫폼 API",
+        description="AI 마케팅 플랫폼 API",
         version="1.0.0",
         debug=settings.debug
     )

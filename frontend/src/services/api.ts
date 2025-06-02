@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
+import axios from 'axios';
 
 // API 베이스 URL 설정
 const API_BASE_URL =

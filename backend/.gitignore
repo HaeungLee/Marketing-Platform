@@ -5,7 +5,7 @@ __pycache__/
 *.pyd
 *.env
 *.venv
-marknv/
+venv311/
 .env
 *.log
 *.sqlite3

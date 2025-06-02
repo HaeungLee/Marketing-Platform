@@ -122,9 +122,6 @@ NAVER_CLIENT_ID=your-naver-client-id
 NAVER_CLIENT_SECRET=your-naver-client-secret
 KAKAO_CLIENT_ID=your-kakao-client-id
 GOOGLE_CLIENT_ID=your-google-client-id
-# Ollama 설정
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODELS=gemma3:1b
 
 # 서버 실행
 python run.py

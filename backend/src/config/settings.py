@@ -53,13 +53,13 @@ class Settings(BaseSettings):
     
     # CORS 설정
     cors_origins: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
-    
-    # 외부 API 설정
+      # 외부 API 설정
     kakao_map_api_key: Optional[str] = None
     naver_client_id: Optional[str] = None
     naver_client_secret: Optional[str] = None
     kakao_client_id: Optional[str] = None
     google_client_id: Optional[str] = None
+    google_api_key: Optional[str] = None  # Google Gemini API 키 추가
     
     # Ollama 설정
     ollama_base_url: str = "http://localhost:11434"
@@ -82,8 +82,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: str = "your-email@gmail.com"
     SMTP_PASSWORD: str = "your-app-password"
-    
-    # Redis 설정
+      # Redis 설정
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
@@ -91,6 +90,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"  # 정의되지 않은 환경변수 무시
     
     @property
     def is_social_login_configured(self) -> dict:
