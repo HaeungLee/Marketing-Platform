@@ -13,12 +13,28 @@ class Settings(BaseSettings):
     debug: bool = True
     log_level: str = "INFO"
     
+    # API URL 설정
+    BASE_URL: str = "http://localhost:3000"
+    
+    # CORS 설정
+    cors_origins: List[str] = ["http://localhost:3000"]
+    
     # 모니터링 설정
     discord_webhook_url: Optional[str] = None
     memory_threshold: int = 90
     cpu_threshold: int = 80
     error_threshold: int = 10
     
+    # 구글 OAuth 설정
+    google_client_id: str = "207390623047-cgtnd87rimflmcnrrhtal9k7u144ef8n.apps.googleusercontent.com"
+    google_client_secret: str = "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"
+    google_redirect_uri: str = "http://localhost:3000/auth/google/callback"
+
+    # 카카오 OAuth 설정
+    kakao_client_id: str = "58abcb4c758b2ac22d34496f4a506894"
+    kakao_client_secret: str = "zWzdkvcAdZP0Se7WtJVMYE7GRa4pVToC"
+    kakao_redirect_uri: str = "http://localhost:3000/auth/kakao/callback"
+
     # PostgreSQL 설정
     postgres_user: str = "postgres"
     postgres_password: str = "human1234"
@@ -51,9 +67,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
     
-    # CORS 설정
-    cors_origins: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
-      # 외부 API 설정
+    # 외부 API 설정
     kakao_map_api_key: Optional[str] = None
     naver_client_id: Optional[str] = None
     naver_client_secret: Optional[str] = None

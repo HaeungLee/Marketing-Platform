@@ -523,3 +523,216 @@ async def naver_login_callback(
     except Exception as e:
         logger.error(f"네이버 로그인 콜백 처리 중 오류: {str(e)}")
         return format_error_response(e)
+
+
+@router.get("/social/kakao/url")
+async def get_kakao_login_url():
+    """카카오 로그인 URL 가져오기"""
+    try:
+        if not settings.kakao_client_id:
+            raise HTTPException(
+                status_code=500,
+                detail="카카오 API 설정이 완료되지 않았습니다."
+            )
+        
+        # 카카오 로그인 URL 생성
+        frontend_callback_url = "http://localhost:3000/auth/callback/kakao"  # 프론트엔드의 콜백 URL
+        state = secrets.token_urlsafe(16)  # CSRF 방지를 위한 상태 토큰
+        
+        authorize_url = "https://kauth.kakao.com/oauth/authorize"
+        
+        from urllib.parse import urlencode
+        params = {
+            "response_type": "code",
+            "client_id": settings.kakao_client_id,
+            "redirect_uri": frontend_callback_url,
+            "state": state
+        }
+        
+        url = f"{authorize_url}?{urlencode(params)}"
+        return {"url": url, "state": state}
+        
+    except Exception as e:
+        logger.error(f"카카오 로그인 URL 생성 중 오류: {str(e)}")
+        return format_error_response(e)
+
+@router.post("/social/kakao/callback")
+async def kakao_login_callback(
+    code: str = Body(...),
+    state: str = Body(...),
+    db: Session = Depends(get_db)
+):
+    """카카오 로그인 콜백 처리"""
+    logger.info(f"카카오 로그인 콜백 - code: {code}, state: {state}")
+    try:
+        # 액세스 토큰 요청
+        token_url = "https://kauth.kakao.com/oauth/token"
+        frontend_callback_url = "http://localhost:3000/auth/callback/kakao"
+        
+        async with httpx.AsyncClient() as client:
+            # 토큰 요청
+            token_data = {
+                "grant_type": "authorization_code",
+                "client_id": settings.kakao_client_id,
+                "client_secret": settings.kakao_client_secret,
+                "redirect_uri": frontend_callback_url,
+                "code": code
+            }
+            
+            token_response = await client.post(
+                token_url,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data=token_data
+            )
+            
+            token_info = token_response.json()
+            if "error" in token_info:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"카카오 토큰 획득 실패: {token_info['error']}"
+                )
+            
+            # 사용자 정보 요청
+            user_info_response = await client.get(
+                "https://kapi.kakao.com/v2/user/me",
+                headers={
+                    "Authorization": f"Bearer {token_info['access_token']}",
+                    "Content-type": "application/x-www-form-urlencoded;charset=utf-8"
+                }
+            )
+            
+            user_info = user_info_response.json()
+            if "id" not in user_info:
+                raise HTTPException(
+                    status_code=400,
+                    detail="카카오 사용자 정보 획득 실패"
+                )
+            
+            kakao_account = user_info.get("kakao_account", {})
+            
+            # 기존 사용자 확인 또는 새 사용자 생성
+            email = kakao_account.get("email")
+            if not email:
+                raise HTTPException(
+                    status_code=400,
+                    detail="이메일 정보를 가져올 수 없습니다. 카카오 계정 이메일 제공 권한을 확인해주세요."
+                )
+                
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                user = User(
+                    id=str(uuid.uuid4()),
+                    email=email,
+                    username=kakao_account.get("profile", {}).get("nickname", f"카카오사용자_{user_info['id']}"),
+                    user_type=UserType.PERSONAL,
+                    social_provider="kakao",
+                    social_id=str(user_info["id"])
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            
+            # 액세스 토큰 생성
+            access_token = create_access_token(
+                data={"sub": user.id, "user_type": user.user_type.value}
+            )
+            
+            return Token(
+                access_token=access_token,
+                token_type="bearer",
+                user_id=user.id,
+                user_type=user.user_type
+            )
+            
+    except Exception as e:
+        logger.error(f"카카오 로그인 콜백 처리 중 오류: {str(e)}")
+        return format_error_response(e)
+
+
+@router.get("/social/google/url")
+async def google_login_url():
+    """구글 로그인 URL 생성"""
+    state = secrets.token_urlsafe(32)
+    scope = "openid email profile"
+    redirect_uri = f"{settings.BASE_URL}/auth/callback/google"
+    google_auth_url = (
+        "https://accounts.google.com/o/oauth2/v2/auth"
+        f"?client_id={settings.google_client_id}"
+        f"&redirect_uri={redirect_uri}"
+        f"&response_type=code"
+        f"&scope={scope}"
+        f"&state={state}"
+    )
+    return {"url": google_auth_url}
+
+@router.post("/social/google/callback")
+async def google_login_callback(
+    code: str = Body(...),
+    state: str = Body(...),
+    db: Session = Depends(get_db)
+):
+    """구글 로그인 콜백 처리"""    
+    try:
+        # 액세스 토큰 얻기
+        redirect_uri = f"{settings.BASE_URL}/auth/callback/google"
+        token_url = "https://oauth2.googleapis.com/token"
+        token_data = {
+            "code": code,
+            "client_id": settings.google_client_id,
+            "client_secret": settings.google_client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        }
+
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(token_url, data=token_data)
+            token_response.raise_for_status()
+            token_info = token_response.json()
+
+            # 사용자 정보 가져오기
+            headers = {"Authorization": f"Bearer {token_info['access_token']}"}
+            user_info_response = await client.get(
+                "https://www.googleapis.com/oauth2/v2/userinfo",
+                headers=headers
+            )
+            user_info = user_info_response.json()
+
+            # 사용자 조회 또는 생성
+            email = user_info.get("email")
+            if not email:
+                raise HTTPException(status_code=400, detail="이메일 정보를 가져올 수 없습니다.")
+
+            user = db.query(User).filter(User.email == email).first()
+            if not user:                  
+                user = User(
+                    id=str(uuid.uuid4()),
+                    email=email,
+                    username=user_info.get("name", f"구글사용자_{user_info['id']}"),
+                    user_type=UserType.PERSONAL,
+                    social_provider="google",
+                    social_id=str(user_info["id"])
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+
+            # 액세스 토큰 생성
+            access_token = create_access_token(
+                data={"sub": user.id, "user_type": user.user_type.value}
+            )
+            
+            return Token(
+                access_token=access_token,
+                token_type="bearer",
+                user_id=user.id,
+                email=user.email,
+                username=user.username,
+                user_type=user.user_type
+            )
+
+    except httpx.RequestError as e:
+        logger.error(f"Google OAuth error: {str(e)}")
+        raise HTTPException(status_code=500, detail="구글 로그인 처리 중 오류가 발생했습니다.")
+    except Exception as e:
+        logger.error(f"Unexpected error in google callback: {str(e)}")
+        raise HTTPException(status_code=500, detail="알 수 없는 오류가 발생했습니다.")
