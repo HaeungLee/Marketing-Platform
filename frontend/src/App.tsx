@@ -11,6 +11,7 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import PopulationDashboardPage from "./pages/PopulationDashboardPage";
+import FlyerGenerator from "./pages/FlyerGenerator";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
           />
           <Route path="business/setup" element={<BusinessSetupPage />} />
           <Route path="content" element={<ContentGeneratorPage />} />
+          <Route path="flyer" element={<FlyerGenerator />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

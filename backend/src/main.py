@@ -11,10 +11,11 @@ import logging
 # 환경 변수 로드
 load_dotenv()
 
-from config.settings import settings
-from presentation.api.v1 import auth, business, content, analysis
-from infrastructure.ai.ollama_service import OllamaService
-from infrastructure.monitoring.monitoring import MonitoringService, init_instrumentator
+from .config.settings import settings
+from .presentation.api.v1 import auth, business, content, analysis
+from .presentation.api.image_router import router as image_router
+from .infrastructure.ai.ollama_service import OllamaService
+from .infrastructure.monitoring.monitoring import MonitoringService, init_instrumentator
 
 # 로깅 설정
 logging.basicConfig(
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
     app.include_router(business.router, prefix="/api/v1/business", tags=["비즈니스"])
     app.include_router(content.router, prefix="/api/v1/content", tags=["콘텐츠"])
     app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["분석"])
+    app.include_router(image_router, tags=["이미지"])
 
     @app.on_event("startup")
     async def startup_event():
@@ -87,6 +89,7 @@ def create_app() -> FastAPI:
     # 글로벌 예외 처리
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
+        logging.error(f"Global error: {str(exc)}", exc_info=True)
         return JSONResponse(
             status_code=500,
             content={

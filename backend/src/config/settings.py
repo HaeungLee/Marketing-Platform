@@ -37,7 +37,7 @@ class Settings(BaseSettings):
 
     # PostgreSQL 설정
     postgres_user: str = "postgres"
-    postgres_password: str = "human1234"
+    postgres_password: str = "1234"
     postgres_host: str = "localhost"
     postgres_port: str = "5432"
     postgres_db: str = "marketing_platform"

@@ -169,16 +169,6 @@ npm test
 - `CORS_ORIGINS`: CORS 허용 도메인
 - `DEBUG`: 디버그 모드 설정
 
-### AI 모델 설정
-
-Ollama를 사용하여 로컬 LLM을 실행:
-
-```bash
-# Ollama 설치 후
-ollama pull gemma3  # 또는 다른 모델
-ollama serve
-```
-
 ## 📱 페이지 구성
 
 ### 🏠 홈페이지
