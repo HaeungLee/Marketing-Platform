@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 import logging
 
 from config.settings import settings
+from interfaces.api.routes import population
 from presentation.api.v1 import auth, business, content, analysis
 from infrastructure.ai.ollama_service import OllamaService
 from infrastructure.monitoring.monitoring import MonitoringService, init_instrumentator
@@ -52,6 +53,7 @@ def create_app() -> FastAPI:
     )
 
     # 라우터 등록
+    app.include_router(population.router)
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["인증"])
     app.include_router(business.router, prefix="/api/v1/business", tags=["비즈니스"])
     app.include_router(content.router, prefix="/api/v1/content", tags=["콘텐츠"])
