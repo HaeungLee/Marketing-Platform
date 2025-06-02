@@ -29,6 +29,7 @@ import {
   Cell,
   BarChart,
   Bar,
+  Legend,
 } from "recharts";
 import {
   FiTrendingUp,
@@ -37,16 +38,16 @@ import {
   FiDollarSign,
   FiArrowUp,
   FiArrowDown,
+  FiClock,
 } from "react-icons/fi";
 
 // 샘플 데이터
 const performanceData = [
-  { month: "1월", 방문자: 2400, 전환율: 4.2 },
-  { month: "2월", 방문자: 1398, 전환율: 3.8 },
-  { month: "3월", 방문자: 9800, 전환율: 5.1 },
-  { month: "4월", 방문자: 3908, 전환율: 4.7 },
-  { month: "5월", 방문자: 4800, 전환율: 6.2 },
-  { month: "6월", 방문자: 3800, 전환율: 5.9 },
+  { 시간대: "10~12시", 소비금액: 150000, 유동인구: 230 },
+  { 시간대: "12~14시", 소비금액: 220000, 유동인구: 310 },
+  { 시간대: "14~16시", 소비금액: 300000, 유동인구: 420 },
+  { 시간대: "16~18시", 소비금액: 280000, 유동인구: 390 },
+  { 시간대: "18~20시", 소비금액: 350000, 유동인구: 450 },
 ];
 
 const audienceData = [
@@ -61,6 +62,12 @@ const contentPerformance = [
   { type: "인스타그램", 조회수: 8500, 참여율: 6.8 },
   { type: "유튜브", 조회수: 15000, 참여율: 3.9 },
   { type: "전단지", 조회수: 3200, 참여율: 2.1 },
+];
+
+const targetAudienceData = [
+  { age: "20대", 남성: 15, 여성: 18 },
+  { age: "30대", 남성: 25, 여성: 22 },
+  { age: "40대", 남성: 10, 여성: 12 },
 ];
 
 const DashboardPage: React.FC = () => {
@@ -112,32 +119,32 @@ const DashboardPage: React.FC = () => {
         {/* 주요 지표 카드 */}
         <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
           <StatCard
-            title="총 방문자"
-            value="24,387"
-            change="12.5%"
-            icon={FiUsers}
-            isIncrease={true}
-          />
-          <StatCard
-            title="전환율"
-            value="5.2%"
-            change="8.1%"
+            title="주요 소비 타겟"
+            value="30대 남성"
+            change="▲"
             icon={FiTarget}
             isIncrease={true}
           />
           <StatCard
-            title="수익"
-            value="₩1,234,567"
-            change="15.3%"
-            icon={FiDollarSign}
+            title="소비 집중 시간대"
+            value="14~16시"
+            change="▲"
+            icon={FiClock}
             isIncrease={true}
           />
           <StatCard
-            title="참여율"
-            value="4.8%"
-            change="2.4%"
-            icon={FiTrendingUp}
-            isIncrease={false}
+            title="타겟 지역"
+            value="수지구 신봉동"
+            change="NEW"
+            icon={FiUsers}
+            isIncrease={true}
+          />
+          <StatCard
+            title="타겟 업종"
+            value="카페·음료"
+            change="↑ 12%"
+            icon={FiDollarSign}
+            isIncrease={true}
           />
         </SimpleGrid>
         <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6}>
@@ -156,10 +163,10 @@ const DashboardPage: React.FC = () => {
                       borderColor="blue.400"
                     >
                       <Text fontSize="sm" fontWeight="500" color="blue.800">
-                        20대 여성 고객층 증가 감지
+                        📍 경기도 수지구 신봉동
                       </Text>
                       <Text fontSize="xs" color="blue.600" mt={1}>
-                        인스타그램 마케팅을 강화하여 이 트렌드를 활용하세요.
+                        30대 남성 고객이 가장 높은 소비량을 보였습니다. 이 타겟을 중심으로 마케팅을 기획하세요.
                       </Text>
                     </Box>
                     <Box
@@ -170,10 +177,10 @@ const DashboardPage: React.FC = () => {
                       borderColor="green.400"
                     >
                       <Text fontSize="sm" fontWeight="500" color="green.800">
-                        점심시간대 방문자 급증
+                        🕑 2~3시에 유동인구 급증
                       </Text>
                       <Text fontSize="xs" color="green.600" mt={1}>
-                        점심 메뉴 관련 콘텐츠를 더 많이 생성해보세요.
+                        해당 시간대에 이벤트 또는 프로모션을 집중적으로 진행해보세요.
                       </Text>
                     </Box>
                     <Box
@@ -184,10 +191,10 @@ const DashboardPage: React.FC = () => {
                       borderColor="orange.400"
                     >
                       <Text fontSize="sm" fontWeight="500" color="orange.800">
-                        경쟁사 신규 진입
+                        ⚠️ 경쟁 지역 내 신규 매장 증가
                       </Text>
                       <Text fontSize="xs" color="orange.600" mt={1}>
-                        차별화 전략 수립이 필요합니다.
+                        차별화된 서비스와 고객 혜택 전략을 수립해야 합니다.
                       </Text>
                     </Box>
                   </VStack>
@@ -268,9 +275,8 @@ const DashboardPage: React.FC = () => {
             <Card bg={cardBg} shadow="md">
               <CardBody>
                 <VStack align="stretch" spacing={4}>
-                  <Heading size="md">성과 트렌드</Heading>
+                  <Heading size="md">시간대별 소비 & 유동인구</Heading>
                   <Box h="300px">
-                    {" "}
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
                         data={performanceData}
@@ -278,48 +284,40 @@ const DashboardPage: React.FC = () => {
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
-                          dataKey="month"
-                          label={{
-                            value: "월별",
-                            position: "bottom",
-                            offset: 20,
-                          }}
+                          dataKey="시간대"
+                          label={{ value: "시간대", position: "bottom", offset: 20 }}
                         />
                         <YAxis
                           yAxisId="left"
                           label={{
-                            value: "방문자 수",
+                            value: "소비금액(천원)",
                             angle: -90,
                             position: "insideLeft",
-                            offset: -5,
+                            offset: 5
                           }}
+                          tickFormatter={(value) => (value / 1000).toLocaleString()}
                         />
                         <YAxis
                           yAxisId="right"
                           orientation="right"
-                          label={{
-                            value: "전환율 (%)",
-                            angle: 90,
-                            position: "insideRight",
-                            offset: 10,
-                          }}
+                          label={{ value: "유동인구(명)", angle: 90, position: "insideRight" }}
                         />
                         <Tooltip />
                         <Line
                           yAxisId="left"
                           type="monotone"
-                          dataKey="방문자"
+                          dataKey="소비금액"
                           stroke="#3182ce"
                           strokeWidth={3}
-                          dot={{ fill: "#3182ce", strokeWidth: 2, r: 4 }}
+                          dot={{ fill: "#3182ce", r: 4 }}
                         />
                         <Line
                           yAxisId="right"
                           type="monotone"
-                          dataKey="전환율"
+                          dataKey="유동인구"
                           stroke="#38a169"
                           strokeWidth={3}
-                          dot={{ fill: "#38a169", strokeWidth: 2, r: 4 }}
+                          dot={{ fill: "#38a169", r: 4 }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -333,46 +331,24 @@ const DashboardPage: React.FC = () => {
           <GridItem>
             <Card bg={cardBg} shadow="md">
               <CardBody>
-                <VStack align="stretch" spacing={1}>
-                  <Heading size="md">타겟 고객층</Heading>
+                <VStack align="stretch" spacing={4}>
+                  <Heading size="md">타겟 고객 비율 (연령대 x 성별)</Heading>
+                  <Text fontSize="xs" color="gray.500" mt={-2}>
+                    ※ 상위 3개 연령대 기준
+                  </Text>
                   <Box h="300px">
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={audienceData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {audienceData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
+                      <BarChart data={targetAudienceData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="age" label={{ value: "연령대", position: "bottom", offset: 10 }} />
+                        <YAxis label={{ value: "비율 (%)", angle: -90, position: "insideLeft" }} />
                         <Tooltip />
-                      </PieChart>
+                        <Legend verticalAlign="top" align="right" />
+                        <Bar dataKey="남성" stackId="a" fill="#3182CE" />
+                        <Bar dataKey="여성" stackId="a" fill="#E53E3E" />
+                      </BarChart>
                     </ResponsiveContainer>
                   </Box>
-                  <VStack align="stretch" spacing={1}>
-                    {audienceData.map((item, index) => (
-                      <HStack key={index} justify="space-between">
-                        <HStack>
-                          <Box
-                            w={3}
-                            h={3}
-                            bg={item.color}
-                            borderRadius="full"
-                          />
-                          <Text fontSize="m">{item.name}</Text>
-                        </HStack>
-                        <Text fontSize="l" fontWeight="bold">
-                          {item.value}%
-                        </Text>
-                      </HStack>
-                    ))}
-                  </VStack>
                 </VStack>
               </CardBody>
             </Card>
