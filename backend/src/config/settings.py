@@ -2,6 +2,7 @@
 애플리케이션 설정
 """
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import List, Optional
 import os
 
@@ -15,9 +16,8 @@ class Settings(BaseSettings):
     
     # API URL 설정
     BASE_URL: str = "http://localhost:3000"
-    
-    # CORS 설정
-    cors_origins: List[str] = ["http://localhost:3000"]
+    # CORS 설정 - 문자열로 저장하고 파싱하여 사용
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     
     # 모니터링 설정
     discord_webhook_url: Optional[str] = None
@@ -66,14 +66,11 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
-    
-    # 외부 API 설정
+      # 외부 API 설정
     kakao_map_api_key: Optional[str] = None
     naver_client_id: Optional[str] = None
     naver_client_secret: Optional[str] = None
-    kakao_client_id: Optional[str] = None
-    google_client_id: Optional[str] = None
-    google_api_key: Optional[str] = None  # Google Gemini API 키 추가
+    google_api_key: str = "AIzaSyDrPzr9VvEUGVU6a87DxyTQNs17_wldqBE"  # Google Gemini API 키
     
     # Ollama 설정
     ollama_base_url: str = "http://localhost:11434"
@@ -95,16 +92,21 @@ class Settings(BaseSettings):
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USER: str = "your-email@gmail.com"
-    SMTP_PASSWORD: str = "your-app-password"
-      # Redis 설정
+    SMTP_PASSWORD: str = "your-app-password"    # Redis 설정
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"  # 정의되지 않은 환경변수 무시
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8", 
+        extra="ignore"  # 정의되지 않은 환경변수 무시
+    )
+    
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """CORS origins를 리스트로 반환"""
+        return [origin.strip() for origin in self.cors_origins.split(",")]
     
     @property
     def is_social_login_configured(self) -> dict:

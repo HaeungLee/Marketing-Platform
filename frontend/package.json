@@ -12,10 +12,10 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@chakra-ui/icons": "^2.2.4",
     "@chakra-ui/react": "^2.8.2",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@types/fabric": "^5.3.10",
     "@types/leaflet": "^1.9.8",
     "axios": "^1.6.2",
     "fabric": "^6.6.7",

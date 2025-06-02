@@ -1,0 +1,9 @@
+{
+  "name": "test-integration",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "fabric": "^6.6.7",
+    "node-fetch": "^3.3.2"
+  }
+}

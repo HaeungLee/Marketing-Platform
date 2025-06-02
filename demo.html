@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 이미지 생성 및 편집 데모</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/6.6.0/fabric.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section-title {
+            color: #2d3748;
+            border-bottom: 2px solid #4299e1;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        input, textarea, select, button {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #3182ce;
+        }
+        button:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+        .tool-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .canvas-container {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+        }
+        canvas {
+            border: 1px solid #cbd5e0;
+            background-color: white;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .status.success {
+            background-color: #c6f6d5;
+            color: #22543d;
+        }
+        .status.error {
+            background-color: #fed7d7;
+            color: #742a2a;
+        }
+        .status.loading {
+            background-color: #bee3f8;
+            color: #2a4365;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 AI 이미지 생성 및 편집 데모</h1>
+    
+    <!-- 이미지 생성 섹션 -->
+    <div class="container">
+        <h2 class="section-title">1. AI 이미지 생성</h2>
+        <div class="input-group">
+            <label for="promptInput">프롬프트 입력:</label>
+            <textarea id="promptInput" placeholder="예: 모던한 카페 전단지, 파란색 배경, 미니멀 디자인" rows="2"></textarea>
+        </div>
+        <button id="generateBtn" onclick="generateImage()">🤖 AI 이미지 생성</button>
+        <div id="status" class="status hidden"></div>
+    </div>
+
+    <!-- 편집 도구 섹션 -->
+    <div class="container">
+        <h2 class="section-title">2. 편집 도구</h2>
+        
+        <!-- 텍스트 추가 -->
+        <div class="input-group">
+            <label>텍스트 추가:</label>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" id="textInput" placeholder="추가할 텍스트" style="flex: 1; min-width: 200px;">
+                <input type="number" id="fontSize" value="24" min="8" max="72" style="width: 60px;" title="글자 크기">
+                <input type="color" id="textColor" value="#000000" title="글자 색상">
+                <button onclick="addText()">텍스트 추가</button>
+            </div>
+        </div>
+
+        <!-- 도형 추가 -->
+        <div class="input-group">
+            <label>도형 추가:</label>
+            <div class="tool-group">
+                <button onclick="addShape('rectangle')">📐 사각형</button>
+                <button onclick="addShape('circle')">⭕ 원형</button>
+                <button onclick="addShape('triangle')">🔺 삼각형</button>
+            </div>
+        </div>
+
+        <!-- 편집 액션 -->
+        <div class="input-group">
+            <label>편집 액션:</label>
+            <div class="tool-group">
+                <button onclick="deleteSelected()">🗑️ 선택 삭제</button>
+                <button onclick="clearCanvas()">🧹 전체 지우기</button>
+                <button onclick="downloadImage()">💾 이미지 다운로드</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 캔버스 섹션 -->
+    <div class="container">
+        <h2 class="section-title">3. 편집 캔버스</h2>
+        <div class="canvas-container">
+            <canvas id="fabricCanvas" width="800" height="600"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let canvas;
+        
+        // Fabric.js 캔버스 초기화
+        function initCanvas() {
+            canvas = new fabric.Canvas('fabricCanvas', {
+                backgroundColor: 'white'
+            });
+            
+            // 키보드 이벤트 추가
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Delete' && canvas.getActiveObject()) {
+                    deleteSelected();
+                }
+            });
+        }
+
+        // AI 이미지 생성 (실제로는 플레이스홀더)
+        async function generateImage() {
+            const prompt = document.getElementById('promptInput').value;
+            const generateBtn = document.getElementById('generateBtn');
+            const status = document.getElementById('status');
+            
+            if (!prompt.trim()) {
+                showStatus('프롬프트를 입력해주세요.', 'error');
+                return;
+            }
+
+            generateBtn.disabled = true;
+            generateBtn.textContent = '🔄 이미지 생성 중...';
+            showStatus('AI 이미지를 생성하고 있습니다...', 'loading');
+
+            try {
+                // 실제 API 호출 대신 플레이스홀더 이미지 생성
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기
+                
+                // 플레이스홀더 이미지 생성
+                const placeholderUrl = createPlaceholderImage(prompt);
+                
+                // 캔버스에 이미지 추가
+                fabric.Image.fromURL(placeholderUrl, function(img) {
+                    canvas.clear();
+                    
+                    // 이미지 크기 조정
+                    const scale = Math.min(
+                        canvas.width / img.width,
+                        canvas.height / img.height
+                    ) * 0.8;
+                    
+                    img.scale(scale);
+                    img.center();
+                    canvas.add(img);
+                    canvas.renderAll();
+                    
+                    showStatus('✅ 이미지가 성공적으로 생성되었습니다!', 'success');
+                });
+                
+            } catch (error) {
+                showStatus('❌ 이미지 생성 중 오류가 발생했습니다.', 'error');
+                console.error(error);
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🤖 AI 이미지 생성';
+            }
+        }
+
+        // 플레이스홀더 이미지 생성
+        function createPlaceholderImage(prompt) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            // 배경 그라디언트
+            const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // 텍스트 추가
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('AI Generated Image', 256, 200);
+            
+            ctx.font = '16px Arial';
+            const lines = wrapText(ctx, prompt, 400);
+            lines.forEach((line, index) => {
+                ctx.fillText(line, 256, 250 + (index * 25));
+            });
+            
+            ctx.font = '14px Arial';
+            ctx.fillText('Image generation in progress...', 256, 350);
+            
+            // 장식 요소
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(50, 50, 412, 412);
+            
+            return canvas.toDataURL();
+        }
+
+        // 텍스트 줄바꿈 헬퍼
+        function wrapText(ctx, text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let line = '';
+            
+            for (let word of words) {
+                const testLine = line + word + ' ';
+                const metrics = ctx.measureText(testLine);
+                
+                if (metrics.width > maxWidth && line !== '') {
+                    lines.push(line.trim());
+                    line = word + ' ';
+                } else {
+                    line = testLine;
+                }
+            }
+            lines.push(line.trim());
+            return lines.slice(0, 3); // 최대 3줄
+        }
+
+        // 텍스트 추가
+        function addText() {
+            const textInput = document.getElementById('textInput');
+            const fontSize = document.getElementById('fontSize').value;
+            const textColor = document.getElementById('textColor').value;
+            
+            if (!textInput.value.trim()) {
+                showStatus('텍스트를 입력해주세요.', 'error');
+                return;
+            }
+
+            const text = new fabric.Text(textInput.value, {
+                left: 100,
+                top: 100,
+                fontSize: parseInt(fontSize),
+                fill: textColor,
+                fontFamily: 'Arial'
+            });
+
+            canvas.add(text);
+            canvas.setActiveObject(text);
+            canvas.renderAll();
+            
+            textInput.value = '';
+            showStatus('텍스트가 추가되었습니다.', 'success');
+        }
+
+        // 도형 추가
+        function addShape(shapeType) {
+            let shape;
+            const commonProps = {
+                left: 150,
+                top: 150,
+                fill: 'rgba(66, 153, 225, 0.5)',
+                stroke: '#4299e1',
+                strokeWidth: 2
+            };
+
+            switch (shapeType) {
+                case 'rectangle':
+                    shape = new fabric.Rect({
+                        ...commonProps,
+                        width: 100,
+                        height: 80
+                    });
+                    break;
+                case 'circle':
+                    shape = new fabric.Circle({
+                        ...commonProps,
+                        radius: 50
+                    });
+                    break;
+                case 'triangle':
+                    shape = new fabric.Triangle({
+                        ...commonProps,
+                        width: 100,
+                        height: 100
+                    });
+                    break;
+            }
+
+            if (shape) {
+                canvas.add(shape);
+                canvas.setActiveObject(shape);
+                canvas.renderAll();
+                showStatus(`${shapeType} 도형이 추가되었습니다.`, 'success');
+            }
+        }
+
+        // 선택된 객체 삭제
+        function deleteSelected() {
+            const activeObjects = canvas.getActiveObjects();
+            if (activeObjects.length) {
+                canvas.remove(...activeObjects);
+                canvas.discardActiveObject();
+                canvas.renderAll();
+                showStatus('선택된 객체가 삭제되었습니다.', 'success');
+            } else {
+                showStatus('삭제할 객체를 선택해주세요.', 'error');
+            }
+        }
+
+        // 캔버스 지우기
+        function clearCanvas() {
+            canvas.clear();
+            canvas.backgroundColor = 'white';
+            canvas.renderAll();
+            showStatus('캔버스가 초기화되었습니다.', 'success');
+        }
+
+        // 이미지 다운로드
+        function downloadImage() {
+            const dataURL = canvas.toDataURL({
+                format: 'png',
+                quality: 1
+            });
+            
+            const link = document.createElement('a');
+            link.download = 'ai-flyer.png';
+            link.href = dataURL;
+            link.click();
+            
+            showStatus('이미지가 다운로드되었습니다.', 'success');
+        }
+
+        // 상태 메시지 표시
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.classList.remove('hidden');
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    status.classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        window.addEventListener('load', initCanvas);
+    </script>
+</body>
+</html>
