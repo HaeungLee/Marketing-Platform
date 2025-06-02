@@ -2,13 +2,11 @@ import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import { authApi } from "../services/apiService";
-import { useAuth } from "../contexts/AuthContext";
 
 const AuthCallbackPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { login } = useAuth();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -45,14 +43,10 @@ const AuthCallbackPage = () => {
         );
         console.log("Social callback response:", response);
 
-        // AuthContext를 통해 사용자 정보 저장
-        login({
-          access_token: response.access_token,
-          user_id: response.user_id,
-          email: response.email,
-          username: response.username,
-          user_type: response.user_type,
-        });
+        // 토큰 저장
+        localStorage.setItem("access_token", response.access_token);
+        localStorage.setItem("user_id", response.user_id);
+        localStorage.setItem("user_type", response.user_type);
 
         toast({
           title: "로그인 성공",
@@ -62,6 +56,7 @@ const AuthCallbackPage = () => {
           isClosable: true,
         });
 
+        // /app으로 리다이렉션
         navigate("/app");
       } catch (error: any) {
         console.error("Social login callback error:", error);
@@ -87,7 +82,7 @@ const AuthCallbackPage = () => {
     };
 
     handleCallback();
-  }, [searchParams, navigate, toast, login]);
+  }, [searchParams, navigate, toast]);
 
   return null; // 로딩 중에는 아무것도 표시하지 않음
 };

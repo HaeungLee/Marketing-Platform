@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     cpu_threshold: int = 80
     error_threshold: int = 10
     
+    # 카카오 OAuth 설정
+    kakao_client_id: str = "58abcb4c758b2ac22d34496f4a506894"
+    kakao_client_secret: str = "zWzdkvcAdZP0Se7WtJVMYE7GRa4pVToC"
+    kakao_redirect_uri: str = "http://localhost:3000/auth/kakao/callback"
+
     # PostgreSQL 설정
     postgres_user: str = "postgres"
     postgres_password: str = "human1234"
