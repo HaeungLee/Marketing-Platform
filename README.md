@@ -40,7 +40,7 @@
 
 - **Framework**: FastAPI (Python 3.9+)
 - **Architecture**: Clean Architecture (Domain-Driven Design)
-- **AI Service**: Ollama (로컬 LLM)
+- **AI Service**: Google Gemini API
 - **Testing**: pytest (TDD 방식)
 - **Design Patterns**: SOLID 원칙 준수
 
@@ -165,7 +165,7 @@ npm test
 
 백엔드의 `src/config/settings.py`에서 다음 설정을 확인:
 
-- `OLLAMA_BASE_URL`: Ollama 서버 주소 (기본: http://localhost:11434)
+- `GOOGLE_API_KEY`: Google Gemini API 키
 - `CORS_ORIGINS`: CORS 허용 도메인
 - `DEBUG`: 디버그 모드 설정
 

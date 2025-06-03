@@ -10,7 +10,6 @@ import base64
 import os
 
 from application.interfaces.ai_service import AIService
-from infrastructure.ai.ollama_service import OllamaService
 
 router = APIRouter()
 
@@ -103,13 +102,12 @@ def get_ai_service() -> AIService:
     """AI 서비스 의존성 주입"""
     # 환경변수에서 API 키 가져오기
     api_key = os.getenv("GOOGLE_API_KEY", "AIzaSyDrPzr9VvEUGVU6a87DxyTQNs17_wldqBE")
-    
     try:
         from infrastructure.ai.gemini_service import GeminiService
         return GeminiService(api_key)
-    except ImportError:
-        # fallback to OllamaService if GeminiService is not available
-        return OllamaService()
+    except ImportError as e:
+        # Gemini 서비스를 사용할 수 없는 경우
+        raise HTTPException(status_code=500, detail=f"AI 서비스를 사용할 수 없습니다: {str(e)}")
 
 
 def get_gemini_service():

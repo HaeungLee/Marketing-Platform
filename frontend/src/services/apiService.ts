@@ -15,14 +15,12 @@ export const authApi = {
     const response = await apiClient.get(`/auth/social/${provider}/url`);
     return response.data;
   },
-
   // 소셜 로그인 콜백 처리
   handleSocialCallback: async (
     provider: string,
     code: string,
     state: string
   ) => {
-    console.log("Sending social callback request:", { provider, code, state });
     const response = await apiClient.post(
       `/auth/social/${provider}/callback`,
       {
@@ -37,14 +35,12 @@ export const authApi = {
     );
     return response.data;
   },
-
   // 로그인
   login: async (userId: string, password: string) => {
     const requestData = {
       user_id: userId,
       password: password,
     };
-    console.log("Sending login request:", requestData);
     try {
       const response = await apiClient.post("/auth/login", requestData);
       return response.data;
@@ -131,8 +127,10 @@ export const contentApi = {
   ): Promise<ContentGenerationResponse> => {
     const response = await apiClient.post("/content/generate", data);
     return response.data;
-  },  // 이미지 생성
-  generateImage: async (data: ImageGenerationRequest): Promise<ImageGenerationResponse> => {
+  }, // 이미지 생성
+  generateImage: async (
+    data: ImageGenerationRequest
+  ): Promise<ImageGenerationResponse> => {
     const response = await apiClient.post("/api/images/generate", data);
     return response.data;
   },

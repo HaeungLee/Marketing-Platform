@@ -33,13 +33,14 @@ const ContentGeneratorPage: React.FC = () => {
   const [tone, setTone] = useState("친근한");
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // 이미지 생성 상태
   const [imagePrompt, setImagePrompt] = useState("");
   const [imageStyle, setImageStyle] = useState("professional");
-  const [generatedImage, setGeneratedImage] = useState<ImageGenerationResponse | null>(null);
+  const [generatedImage, setGeneratedImage] =
+    useState<ImageGenerationResponse | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
-  
+
   const toast = useToast();
   const handleGenerate = async () => {
     if (!businessName.trim() || !productName.trim()) {
@@ -60,31 +61,33 @@ const ContentGeneratorPage: React.FC = () => {
         business_id: `business-${Date.now()}`,
         business_name: businessName,
         business_category: businessCategory || "일반",
-        business_description: businessDescription || "우수한 서비스를 제공하는 비즈니스",
+        business_description:
+          businessDescription || "우수한 서비스를 제공하는 비즈니스",
         product_name: productName,
         product_description: productDescription || "고품질의 상품/서비스",
         content_type: contentType,
         tone: tone,
-        keywords: []
-      };      console.log("요청 데이터:", requestData);
+        keywords: [],
+      };
 
-      const response = await fetch("http://localhost:8001/api/v1/content/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      });
+      const response = await fetch(
+        "http://localhost:8001/api/v1/content/generate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
       const data = await response.json();
-      console.log("응답 데이터:", data);
 
       setResponse(data.content);
-      
+
       toast({
         title: "성공",
         description: "콘텐츠가 성공적으로 생성되었습니다!",
@@ -96,7 +99,8 @@ const ContentGeneratorPage: React.FC = () => {
       console.error("콘텐츠 생성 오류:", error);
       toast({
         title: "오류 발생",
-        description: error.response?.data?.detail || "콘텐츠 생성 중 오류가 발생했습니다.",
+        description:
+          error.response?.data?.detail || "콘텐츠 생성 중 오류가 발생했습니다.",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -149,7 +153,8 @@ const ContentGeneratorPage: React.FC = () => {
     } catch (error: any) {
       toast({
         title: "오류 발생",
-        description: error.response?.data?.detail || "이미지 생성 중 오류가 발생했습니다.",
+        description:
+          error.response?.data?.detail || "이미지 생성 중 오류가 발생했습니다.",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -171,7 +176,9 @@ const ContentGeneratorPage: React.FC = () => {
           <Tab>이미지 생성</Tab>
         </TabList>
 
-        <TabPanels>          {/* 텍스트 콘텐츠 생성 탭 */}
+        <TabPanels>
+          {" "}
+          {/* 텍스트 콘텐츠 생성 탭 */}
           <TabPanel>
             <VStack spacing={4} align="stretch">
               <FormControl>
@@ -224,7 +231,10 @@ const ContentGeneratorPage: React.FC = () => {
               <HStack spacing={4}>
                 <FormControl>
                   <FormLabel>콘텐츠 타입</FormLabel>
-                  <Select value={contentType} onChange={(e) => setContentType(e.target.value)}>
+                  <Select
+                    value={contentType}
+                    onChange={(e) => setContentType(e.target.value)}
+                  >
                     <option value="blog">블로그 포스트</option>
                     <option value="instagram">인스타그램</option>
                     <option value="youtube">유튜브</option>
@@ -234,7 +244,10 @@ const ContentGeneratorPage: React.FC = () => {
 
                 <FormControl>
                   <FormLabel>톤앤매너</FormLabel>
-                  <Select value={tone} onChange={(e) => setTone(e.target.value)}>
+                  <Select
+                    value={tone}
+                    onChange={(e) => setTone(e.target.value)}
+                  >
                     <option value="친근한">친근한</option>
                     <option value="전문적인">전문적인</option>
                     <option value="캐주얼한">캐주얼한</option>
@@ -269,7 +282,6 @@ const ContentGeneratorPage: React.FC = () => {
               )}
             </VStack>
           </TabPanel>
-
           {/* 이미지 생성 탭 */}
           <TabPanel>
             <VStack spacing={4} align="stretch">
@@ -294,7 +306,10 @@ const ContentGeneratorPage: React.FC = () => {
 
               <FormControl>
                 <FormLabel>이미지 스타일</FormLabel>
-                <Select value={imageStyle} onChange={(e) => setImageStyle(e.target.value)}>
+                <Select
+                  value={imageStyle}
+                  onChange={(e) => setImageStyle(e.target.value)}
+                >
                   <option value="professional">전문적인</option>
                   <option value="casual">캐주얼</option>
                   <option value="modern">모던</option>
@@ -345,7 +360,8 @@ const ContentGeneratorPage: React.FC = () => {
                     파일명: {generatedImage.filename}
                   </Text>
                   <Text fontSize="sm" color="gray.500" mt={1}>
-                    생성 시간: {new Date(generatedImage.created_at).toLocaleString()}
+                    생성 시간:{" "}
+                    {new Date(generatedImage.created_at).toLocaleString()}
                   </Text>
                 </Box>
               )}

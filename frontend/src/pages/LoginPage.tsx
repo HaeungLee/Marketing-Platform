@@ -44,13 +44,10 @@ const LoginPage = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>();
-
   const handleFormSubmit: SubmitHandler<LoginFormData> = async (data) => {
     setIsSubmitting(true);
-    console.log("Form data:", JSON.stringify(data, null, 2)); // 디버깅용 로그
     try {
       const response = await authApi.login(data.user_id, data.password);
-      console.log("Login response:", response); // 디버깅용 로그
 
       // 토큰을 로컬 스토리지에 저장
       localStorage.setItem("access_token", response.access_token);
@@ -77,13 +74,10 @@ const LoginPage = () => {
         JSON.stringify(error.response?.data, null, 2)
       ); // 추가된 로그
       let errorMessage = "로그인에 실패했습니다.";
-
       if (error.response?.data?.detail) {
-        console.log("Error detail:", error.response.data.detail); // 추가된 로그
         if (typeof error.response.data.detail === "string") {
           errorMessage = error.response.data.detail;
         } else if (Array.isArray(error.response.data.detail)) {
-          console.log("Error detail array:", error.response.data.detail); // 추가된 로그
           errorMessage = error.response.data.detail[0]?.msg || errorMessage;
         }
       }

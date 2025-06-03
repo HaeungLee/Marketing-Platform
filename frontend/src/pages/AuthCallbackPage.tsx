@@ -35,13 +35,11 @@ const AuthCallbackPage = () => {
           });
           throw new Error("필수 파라미터가 누락되었습니다.");
         }
-
         const response = await authApi.handleSocialCallback(
           provider,
           code,
           state
         );
-        console.log("Social callback response:", response);
 
         // 토큰 저장
         localStorage.setItem("access_token", response.access_token);

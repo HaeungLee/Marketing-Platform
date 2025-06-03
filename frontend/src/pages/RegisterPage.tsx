@@ -69,7 +69,9 @@ interface PersonalRegisterFormProps {
   onSubmit: (data: FormData) => Promise<void>;
 }
 
-const PersonalRegisterForm: React.FC<PersonalRegisterFormProps> = ({ onSubmit }) => {
+const PersonalRegisterForm: React.FC<PersonalRegisterFormProps> = ({
+  onSubmit,
+}) => {
   const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -110,10 +112,14 @@ const PersonalRegisterForm: React.FC<PersonalRegisterFormProps> = ({ onSubmit })
         isClosable: true,
       });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || "인증 메일 발송에 실패했습니다.";
+      const errorMessage =
+        error.response?.data?.detail || "인증 메일 발송에 실패했습니다.";
       toast({
         title: "인증 메일 발송 실패",
-        description: typeof errorMessage === 'string' ? errorMessage : "인증 메일 발송에 실패했습니다.",
+        description:
+          typeof errorMessage === "string"
+            ? errorMessage
+            : "인증 메일 발송에 실패했습니다.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -146,10 +152,14 @@ const PersonalRegisterForm: React.FC<PersonalRegisterFormProps> = ({ onSubmit })
         isClosable: true,
       });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || "이메일 인증에 실패했습니다.";
+      const errorMessage =
+        error.response?.data?.detail || "이메일 인증에 실패했습니다.";
       toast({
         title: "이메일 인증 실패",
-        description: typeof errorMessage === 'string' ? errorMessage : "이메일 인증에 실패했습니다.",
+        description:
+          typeof errorMessage === "string"
+            ? errorMessage
+            : "이메일 인증에 실패했습니다.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -211,7 +221,9 @@ const PersonalRegisterForm: React.FC<PersonalRegisterFormProps> = ({ onSubmit })
               },
             })}
           />
-          <FormErrorMessage>{errors.user_id?.message as string}</FormErrorMessage>
+          <FormErrorMessage>
+            {errors.user_id?.message as string}
+          </FormErrorMessage>
         </FormControl>
 
         <FormControl isRequired isInvalid={!!errors.email}>
@@ -282,7 +294,9 @@ const PersonalRegisterForm: React.FC<PersonalRegisterFormProps> = ({ onSubmit })
               },
             })}
           />
-          <FormErrorMessage>{errors.username?.message as string}</FormErrorMessage>
+          <FormErrorMessage>
+            {errors.username?.message as string}
+          </FormErrorMessage>
         </FormControl>
 
         <FormControl isRequired isInvalid={!!errors.password}>
@@ -314,7 +328,9 @@ const PersonalRegisterForm: React.FC<PersonalRegisterFormProps> = ({ onSubmit })
               />
             </InputRightElement>
           </InputGroup>
-          <FormErrorMessage>{errors.password?.message as string}</FormErrorMessage>
+          <FormErrorMessage>
+            {errors.password?.message as string}
+          </FormErrorMessage>
           <FormHelperText>
             영문 대/소문자, 숫자, 특수문자를 포함한 8자 이상
           </FormHelperText>
@@ -334,14 +350,18 @@ const PersonalRegisterForm: React.FC<PersonalRegisterFormProps> = ({ onSubmit })
             />
             <InputRightElement>
               <IconButton
-                aria-label={showConfirmPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+                aria-label={
+                  showConfirmPassword ? "비밀번호 숨기기" : "비밀번호 보기"
+                }
                 icon={showConfirmPassword ? <FiEyeOff /> : <FiEye />}
                 variant="ghost"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               />
             </InputRightElement>
           </InputGroup>
-          <FormErrorMessage>{errors.confirmPassword?.message as string}</FormErrorMessage>
+          <FormErrorMessage>
+            {errors.confirmPassword?.message as string}
+          </FormErrorMessage>
         </FormControl>
 
         <FormControl isInvalid={!!errors.phone}>
@@ -375,7 +395,9 @@ const PersonalRegisterForm: React.FC<PersonalRegisterFormProps> = ({ onSubmit })
               에 동의합니다
             </Text>
           </Checkbox>
-          <FormErrorMessage>{errors.termsAgreed?.message as string}</FormErrorMessage>
+          <FormErrorMessage>
+            {errors.termsAgreed?.message as string}
+          </FormErrorMessage>
         </FormControl>
 
         <Button
@@ -397,7 +419,9 @@ interface BusinessRegisterFormProps {
   onSubmit: (data: FormData) => Promise<void>;
 }
 
-const BusinessRegisterForm: React.FC<BusinessRegisterFormProps> = ({ onSubmit }) => {
+const BusinessRegisterForm: React.FC<BusinessRegisterFormProps> = ({
+  onSubmit,
+}) => {
   const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -442,7 +466,8 @@ const BusinessRegisterForm: React.FC<BusinessRegisterFormProps> = ({ onSubmit })
                   },
                   pattern: {
                     value: /^[a-zA-Z0-9_]+$/,
-                    message: "아이디는 영문, 숫자, 언더스코어(_)만 사용 가능합니다",
+                    message:
+                      "아이디는 영문, 숫자, 언더스코어(_)만 사용 가능합니다",
                   },
                 })}
               />
@@ -575,7 +600,9 @@ const BusinessRegisterForm: React.FC<BusinessRegisterFormProps> = ({ onSubmit })
 
             <FormControl
               isRequired
-              isInvalid={!!errors.business_profile?.business_registration_number}
+              isInvalid={
+                !!errors.business_profile?.business_registration_number
+              }
             >
               <FormLabel>사업자등록번호</FormLabel>
               <Input
@@ -589,7 +616,10 @@ const BusinessRegisterForm: React.FC<BusinessRegisterFormProps> = ({ onSubmit })
                 })}
               />
               <FormErrorMessage>
-                {errors.business_profile?.business_registration_number?.message as string}
+                {
+                  errors.business_profile?.business_registration_number
+                    ?.message as string
+                }
               </FormErrorMessage>
             </FormControl>
 
@@ -659,7 +689,10 @@ const BusinessRegisterForm: React.FC<BusinessRegisterFormProps> = ({ onSubmit })
                 })}
               />
               <FormErrorMessage>
-                {errors.business_profile?.representative_name?.message as string}
+                {
+                  errors.business_profile?.representative_name
+                    ?.message as string
+                }
               </FormErrorMessage>
             </FormControl>
           </VStack>
@@ -758,7 +791,8 @@ const RegisterPage = () => {
     } catch (error: any) {
       toast({
         title: "회원가입 실패",
-        description: error.response?.data?.detail || "회원가입 중 오류가 발생했습니다.",
+        description:
+          error.response?.data?.detail || "회원가입 중 오류가 발생했습니다.",
         status: "error",
         duration: 5000,
         isClosable: true,

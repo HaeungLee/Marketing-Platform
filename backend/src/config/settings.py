@@ -72,10 +72,6 @@ class Settings(BaseSettings):
     naver_client_secret: Optional[str] = None
     google_api_key: str = "AIzaSyDrPzr9VvEUGVU6a87DxyTQNs17_wldqBE"  # Google Gemini API 키
     
-    # Ollama 설정
-    ollama_base_url: str = "http://localhost:11434"
-    ollama_models: str = "gemma3:1b"
-    
     # 이메일 설정
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587

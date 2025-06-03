@@ -22,15 +22,20 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback/:provider" element={<AuthCallbackPage />} />
-        <Route path="/" element={<HomePage />} />        <Route path="/app" element={<Layout />}>
+        <Route path="/" element={<HomePage />} />{" "}
+        <Route path="/app" element={<Layout />}>
           <Route index element={<DashboardPage />} />
-          <Route path="dashboard" element={<Navigate to="/app" replace />} />          <Route
-            path="population" 
+          <Route
+            path="dashboard"
+            element={<Navigate to="/app" replace />}
+          />{" "}
+          <Route
+            path="population"
             element={
               <ErrorBoundary>
                 <PopulationDashboardPage />
               </ErrorBoundary>
-            } 
+            }
           />
           <Route path="business/setup" element={<BusinessSetupPage />} />
           <Route path="content" element={<ContentGeneratorPage />} />
