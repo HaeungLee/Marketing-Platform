@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이미지 생성 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 300px;
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .success {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>이미지 생성 API 테스트</h1>
+    
+    <div class="container">
+        <h2>이미지 생성 요청</h2>
+        <input type="text" id="promptInput" placeholder="이미지 설명을 입력하세요 (예: a cute cat)" value="a cute cat">
+        <button id="generateBtn" onclick="generateImage()">이미지 생성</button>
+    </div>
+
+    <div id="result" class="result" style="display: none;">
+        <h3>결과</h3>
+        <div id="resultContent"></div>
+    </div>
+
+    <script>
+        async function generateImage() {
+            const prompt = document.getElementById('promptInput').value;
+            const button = document.getElementById('generateBtn');
+            const result = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+
+            if (!prompt.trim()) {
+                alert('이미지 설명을 입력해주세요.');
+                return;
+            }
+
+            // UI 업데이트
+            button.disabled = true;
+            button.textContent = '생성 중...';
+            result.style.display = 'block';
+            result.className = 'result';
+            resultContent.innerHTML = '<div class="loading">이미지를 생성하고 있습니다...</div>';
+
+            try {
+                console.log('API 요청 시작:', prompt);
+                
+                const response = await fetch('http://localhost:8000/api/images/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                console.log('응답 상태:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('응답 데이터:', data);
+
+                if (data.success && data.image_data) {
+                    result.className = 'result success';
+                    resultContent.innerHTML = `
+                        <p><strong>성공!</strong> ${data.message}</p>
+                        <p><strong>파일명:</strong> ${data.filename}</p>
+                        <p><strong>파일 크기:</strong> ${data.file_size.toLocaleString()} bytes</p>
+                        <p><strong>이미지:</strong></p>
+                        <img src="data:image/png;base64,${data.image_data}" alt="생성된 이미지">
+                    `;
+                } else {
+                    throw new Error(data.message || '이미지 데이터를 받지 못했습니다.');
+                }
+
+            } catch (error) {
+                console.error('에러:', error);
+                result.className = 'result error';
+                resultContent.innerHTML = `<p><strong>에러:</strong> ${error.message}</p>`;
+            } finally {
+                button.disabled = false;
+                button.textContent = '이미지 생성';
+            }
+        }
+
+        // Enter 키로 생성
+        document.getElementById('promptInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateImage();
+            }
+        });
+    </script>
+</body>
+</html>

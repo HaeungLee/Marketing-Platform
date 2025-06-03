@@ -12,7 +12,7 @@ import logging
 import json
 import httpx
 
-from domain.schemas.auth import (
+from ....domain.schemas.auth import (
     PersonalUserRegister,
     BusinessUserRegister,
     LoginRequest,
@@ -21,13 +21,13 @@ from domain.schemas.auth import (
     EmailVerificationRequest,
     EmailVerificationResponse
 )
-from domain.entities.user import User, BusinessProfile, EmailVerification, PasswordReset
-from domain.entities.user_type import UserType
-from config.database import get_db
+from ....domain.entities.user import User, BusinessProfile, EmailVerification, PasswordReset
+from ....domain.entities.user_type import UserType
+from ....config.database import get_db
 from infrastructure.security.password import get_password_hash, verify_password
 from infrastructure.security.jwt import create_access_token
 from infrastructure.email import send_verification_email, send_password_reset_email
-from config.settings import settings
+from ....config.settings import settings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

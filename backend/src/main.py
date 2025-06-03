@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 import logging
 
@@ -53,14 +54,19 @@ def create_app() -> FastAPI:
     monitoring_service = MonitoringService(
         app=app,
         discord_webhook_url=settings.discord_webhook_url
-    )
-
-    # 라우터 등록
+    )    # 라우터 등록
     app.include_router(auth.router, prefix="/api/v1/auth", tags=["인증"])
     app.include_router(business.router, prefix="/api/v1/business", tags=["비즈니스"])
     app.include_router(content.router, prefix="/api/v1/content", tags=["콘텐츠"])
     app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["분석"])
     app.include_router(image_router, tags=["이미지"])
+    
+    # 정적 파일 서빙 (이미지)
+    if not os.path.exists("static"):
+        os.makedirs("static")
+    if not os.path.exists("static/images"):
+        os.makedirs("static/images")
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
     @app.on_event("startup")
     async def startup_event():

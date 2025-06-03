@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 이미지 디코딩 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        input[type="text"] {
+            width: 300px;
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .image-result {
+            max-width: 100%;
+            margin-top: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+        .debug-info {
+            font-family: monospace;
+            font-size: 12px;
+            background: #f1f3f4;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Base64 이미지 디코딩 및 API 테스트</h1>
+    
+    <div class="container">
+        <div class="test-section">
+            <h3>1. API 직접 테스트</h3>
+            <p>백엔드 API를 직접 호출해서 이미지 데이터를 받아옵니다.</p>
+            <input type="text" id="apiPrompt" placeholder="이미지 설명 (예: a cute cat)" value="a cute cat">
+            <button onclick="testAPI()">API 테스트</button>
+            <div id="apiResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. Base64 데이터 직접 테스트</h3>
+            <p>Base64 데이터를 직접 입력해서 이미지로 변환합니다.</p>
+            <textarea id="base64Input" placeholder="Base64 데이터를 붙여넣으세요..." style="width: 100%; height: 100px; margin-bottom: 10px;"></textarea>
+            <br>
+            <button onclick="testBase64()">Base64 변환 테스트</button>
+            <div id="base64Result" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. Fabric.js 통합 테스트</h3>
+            <p>실제 Fabric.js 캔버스에 이미지를 추가하는 테스트입니다.</p>
+            <button onclick="testFabricIntegration()">Fabric.js 테스트</button>
+            <div id="fabricResult" class="result" style="display: none;"></div>
+            <canvas id="fabricCanvas" width="600" height="400" style="border: 1px solid #ddd; margin-top: 10px; display: none;"></canvas>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Canvas, Image as FabricImage } from 'https://cdn.skypack.dev/fabric@5.3.0';
+        
+        let fabricCanvas = null;
+        let lastApiResponse = null;
+
+        // API 테스트
+        window.testAPI = async function() {
+            const prompt = document.getElementById('apiPrompt').value;
+            const resultDiv = document.getElementById('apiResult');
+            
+            if (!prompt.trim()) {
+                alert('프롬프트를 입력해주세요.');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '<div class="loading">🔄 API 호출 중...</div>';
+
+            try {
+                console.log('🚀 API 테스트 시작:', prompt);
+                
+                const response = await fetch('http://localhost:8000/api/images/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                console.log('📊 응답 상태:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                lastApiResponse = data;
+                
+                console.log('✅ API 응답 데이터:', data);
+
+                let debugInfo = `응답 상태: ${response.status} ${response.ok ? 'OK' : 'ERROR'}
+응답 키들: ${Object.keys(data).join(', ')}
+성공 여부: ${data.success}
+파일명: ${data.filename || 'N/A'}
+파일 크기: ${data.file_size || 'N/A'} bytes
+메시지: ${data.message || 'N/A'}
+image_data 존재: ${!!data.image_data}
+image_data 길이: ${data.image_data?.length || 0}
+image_data 앞 100자: ${data.image_data?.substring(0, 100) || 'N/A'}`;
+
+                if (data.success && data.image_data) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h4>✅ API 호출 성공!</h4>
+                        <div class="debug-info">${debugInfo}</div>
+                        <p><strong>이미지 미리보기:</strong></p>
+                        <img src="data:image/png;base64,${data.image_data}" 
+                             alt="생성된 이미지" 
+                             class="image-result"
+                             onload="console.log('✅ 이미지 로드 성공')"
+                             onerror="console.error('❌ 이미지 로드 실패')">
+                        <br><br>
+                        <button onclick="document.getElementById('base64Input').value = lastApiResponse.image_data; testBase64();">
+                            이 데이터로 Base64 테스트하기
+                        </button>
+                    `;
+                } else {
+                    throw new Error(data.message || '이미지 데이터가 없습니다.');
+                }
+
+            } catch (error) {
+                console.error('❌ API 테스트 실패:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h4>❌ API 호출 실패</h4>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                    <p><strong>해결 방법:</strong></p>
+                    <ul>
+                        <li>백엔드 서버가 http://localhost:8000 에서 실행 중인지 확인</li>
+                        <li>CORS 설정이 올바른지 확인</li>
+                        <li>브라우저 개발자 도구의 Network 탭 확인</li>
+                    </ul>
+                `;
+            }
+        };
+
+        // Base64 직접 테스트
+        window.testBase64 = function() {
+            const base64Data = document.getElementById('base64Input').value;
+            const resultDiv = document.getElementById('base64Result');
+            
+            if (!base64Data.trim()) {
+                alert('Base64 데이터를 입력해주세요.');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+
+            try {
+                console.log('🔍 Base64 테스트 시작');
+                console.log('📏 데이터 길이:', base64Data.length);
+                
+                // Base64 유효성 검사
+                const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+                if (!base64Regex.test(base64Data)) {
+                    throw new Error('유효하지 않은 Base64 형식입니다.');
+                }
+                
+                if (base64Data.length % 4 !== 0) {
+                    throw new Error('Base64 길이가 4의 배수가 아닙니다.');
+                }
+                
+                // MIME 타입 감지
+                const mimeType = base64Data.startsWith('iVBOR') ? 'image/png' : 
+                               base64Data.startsWith('/9j/') ? 'image/jpeg' : 'image/png';
+                
+                console.log('🎨 감지된 MIME 타입:', mimeType);
+                
+                const debugInfo = `Base64 길이: ${base64Data.length}
+4의 배수 여부: ${base64Data.length % 4 === 0}
+감지된 타입: ${mimeType}
+첫 20자: ${base64Data.substring(0, 20)}
+마지막 20자: ${base64Data.substring(base64Data.length - 20)}`;
+
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <h4>✅ Base64 변환 성공!</h4>
+                    <div class="debug-info">${debugInfo}</div>
+                    <p><strong>변환된 이미지:</strong></p>
+                    <img src="data:${mimeType};base64,${base64Data}" 
+                         alt="Base64 이미지" 
+                         class="image-result"
+                         onload="console.log('✅ Base64 이미지 로드 성공')"
+                         onerror="console.error('❌ Base64 이미지 로드 실패')">
+                `;
+
+            } catch (error) {
+                console.error('❌ Base64 테스트 실패:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h4>❌ Base64 변환 실패</h4>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
+            }
+        };
+
+        // Fabric.js 통합 테스트
+        window.testFabricIntegration = async function() {
+            const resultDiv = document.getElementById('fabricResult');
+            const canvasElement = document.getElementById('fabricCanvas');
+            
+            if (!lastApiResponse || !lastApiResponse.image_data) {
+                alert('먼저 API 테스트를 성공적으로 실행해주세요.');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            canvasElement.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '<div class="loading">🔄 Fabric.js 테스트 중...</div>';
+
+            try {
+                console.log('🎨 Fabric.js 테스트 시작');
+                
+                // Fabric 캔버스 초기화
+                if (!fabricCanvas) {
+                    fabricCanvas = new Canvas(canvasElement);
+                    fabricCanvas.setDimensions({ width: 600, height: 400 });
+                    fabricCanvas.backgroundColor = '#ffffff';
+                }
+                
+                fabricCanvas.clear();
+                fabricCanvas.renderAll();
+                
+                const imageData = lastApiResponse.image_data;
+                console.log('📦 이미지 데이터 처리 중...');
+                
+                // 이미지 로드 테스트
+                const img = new Image();
+                
+                await new Promise((resolve, reject) => {
+                    img.onload = () => {
+                        console.log('✅ 이미지 로드 성공:', {
+                            width: img.width,
+                            height: img.height,
+                            naturalWidth: img.naturalWidth,
+                            naturalHeight: img.naturalHeight
+                        });
+                        resolve();
+                    };
+                    
+                    img.onerror = (error) => {
+                        console.error('❌ 이미지 로드 실패:', error);
+                        reject(new Error('이미지 로드 실패'));
+                    };
+                    
+                    img.src = `data:image/png;base64,${imageData}`;
+                });
+                
+                // Fabric 이미지 생성
+                console.log('🔧 Fabric 이미지 생성 중...');
+                const fabricImg = await FabricImage.fromElement(img);
+                
+                if (!fabricImg) {
+                    throw new Error('Fabric 이미지 생성 실패');
+                }
+                
+                // 캔버스에 맞게 크기 조정
+                const scale = Math.min(
+                    fabricCanvas.getWidth() / img.naturalWidth,
+                    fabricCanvas.getHeight() / img.naturalHeight
+                ) * 0.8;
+                
+                fabricImg.scale(scale);
+                fabricCanvas.add(fabricImg);
+                fabricCanvas.centerObject(fabricImg);
+                fabricCanvas.renderAll();
+                
+                console.log('✅ Fabric.js 테스트 완료');
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <h4>✅ Fabric.js 통합 테스트 성공!</h4>
+                    <p>이미지가 아래 캔버스에 성공적으로 추가되었습니다.</p>
+                    <p><strong>이미지 정보:</strong> ${img.naturalWidth}x${img.naturalHeight}px</p>
+                    <p><strong>스케일:</strong> ${scale.toFixed(3)}</p>
+                `;
+
+            } catch (error) {
+                console.error('❌ Fabric.js 테스트 실패:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h4>❌ Fabric.js 테스트 실패</h4>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
+            }
+        };
+        
+        // 전역 변수 설정
+        window.lastApiResponse = null;
+        window.fabricCanvas = null;
+    </script>
+</body>
+</html>

@@ -38,7 +38,14 @@ class ContentGenerationResponse(BaseModel):
 # Dependency injection
 def get_ai_service() -> AIService:
     """AI 서비스 의존성 주입"""
-    return GeminiService()
+    try:
+        return GeminiService()
+    except Exception as e:
+        print(f"GeminiService initialization error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI 서비스 초기화 실패: {str(e)}"
+        )
 
 
 @router.post("/generate", response_model=ContentGenerationResponse)

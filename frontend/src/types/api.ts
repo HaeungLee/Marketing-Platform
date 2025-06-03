@@ -38,6 +38,22 @@ export interface ContentGenerationResponse {
   created_at: string
 }
 
+export interface ImageGenerationRequest {
+  prompt: string
+  business_name?: string
+  business_category?: string
+  style?: string
+}
+
+export interface ImageGenerationResponse {
+  success: boolean
+  image_url?: string
+  filename?: string
+  prompt: string
+  error?: string
+  created_at: string
+}
+
 export interface TargetAudienceResponse {
   business_id: string
   analysis_date: string

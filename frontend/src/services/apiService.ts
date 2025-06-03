@@ -3,6 +3,8 @@ import type {
   Business,
   ContentGenerationRequest,
   ContentGenerationResponse,
+  ImageGenerationRequest,
+  ImageGenerationResponse,
   TargetAudienceResponse,
   DashboardData,
 } from "../types/api";
@@ -128,6 +130,10 @@ export const contentApi = {
     data: ContentGenerationRequest
   ): Promise<ContentGenerationResponse> => {
     const response = await apiClient.post("/content/generate", data);
+    return response.data;
+  },  // 이미지 생성
+  generateImage: async (data: ImageGenerationRequest): Promise<ImageGenerationResponse> => {
+    const response = await apiClient.post("/api/images/generate", data);
     return response.data;
   },
 };

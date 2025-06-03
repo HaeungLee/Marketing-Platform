@@ -7,13 +7,13 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import date
 
-from domain.schemas.population import (
+from ....domain.schemas.population import (
     PopulationStatisticsResponse,
     PopulationStatisticsFilter,
     LocationResponse
 )
-from domain.models.population import PopulationStatistics
-from config.database import get_db
+from ....domain.models.population import PopulationStatistics
+from ....config.database import get_db
 
 router = APIRouter(prefix="/population", tags=["population"])
 
