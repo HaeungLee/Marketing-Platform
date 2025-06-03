@@ -104,6 +104,46 @@ services:
       timeout: 10s
       retries: 3
 
+  # PostgreSQL MCP Server
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    container_name: marketing_platform_mcp
+    restart: unless-stopped
+    environment:
+      # 데이터베이스 연결 설정
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-marketing_platform}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      DB_SSL: false
+      
+      # MCP 서버 설정
+      MCP_SERVER_HOST: 0.0.0.0
+      MCP_SERVER_PORT: 3001
+      
+      # 연결 풀 설정
+      MAX_CONNECTIONS: 10
+      CONNECTION_TIMEOUT: 5000
+      
+      # 로그 설정
+      LOG_LEVEL: ${MCP_LOG_LEVEL:-info}
+      DEBUG: ${MCP_DEBUG:-false}
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - marketing_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "import('./dist/index.js').then(m => new m.default().healthCheck()).then(() => process.exit(0)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # 데이터베이스 관리 도구 (개발용)
   adminer:
     image: adminer:latest

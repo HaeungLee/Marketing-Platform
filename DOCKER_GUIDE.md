@@ -43,11 +43,13 @@ docker-compose -f docker-compose.dev.yml restart backend-dev
 ### 운영환경
 - **프론트엔드**: http://localhost
 - **백엔드 API**: http://localhost:8000
+- **PostgreSQL MCP Server**: localhost:3001
 - **API 문서**: http://localhost:8000/docs
 - **DB 관리**: http://localhost:8080 (adminer)
 
 ### 개발환경
 - **백엔드 API**: http://localhost:8001
+- **PostgreSQL MCP Server**: localhost:3002
 - **DB 관리**: http://localhost:8081 (adminer)
 - **PostgreSQL**: localhost:5433
 - **Redis**: localhost:6380
@@ -76,6 +78,41 @@ docker-compose exec redis redis-cli FLUSHALL
 
 # 볼륨 데이터 완전 삭제
 docker-compose down -v
+```
+
+## 🔧 PostgreSQL MCP Server
+
+PostgreSQL MCP Server는 AI 모델이 데이터베이스와 직접 상호작용할 수 있게 해주는 서버입니다.
+
+### MCP Server 기능
+- **SQL 쿼리 실행**: 직접 SQL 쿼리 실행
+- **스키마 탐색**: 데이터베이스 구조 조회
+- **데이터 조작**: 삽입, 수정, 삭제
+- **성능 분석**: 쿼리 최적화 및 통계
+
+### MCP Server 관리
+
+```bash
+# MCP Server만 재시작
+docker-compose restart mcp-server
+
+# MCP Server 로그 확인
+docker-compose logs -f mcp-server
+
+# MCP Server 상태 확인
+docker-compose exec mcp-server npm run test
+
+# 개발모드로 실행
+docker-compose -f docker-compose.dev.yml up mcp-server-dev
+```
+
+### MCP Server 테스트
+
+```bash
+# 테스트 실행
+cd mcp-server
+npm run build
+node test.mjs
 ```
 
 ## 🚀 배포 준비

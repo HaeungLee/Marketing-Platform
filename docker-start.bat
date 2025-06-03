@@ -29,6 +29,7 @@ echo 서비스 시작 완료!
 echo ==========================================
 echo 프론트엔드: http://localhost
 echo 백엔드 API: http://localhost:8000
+echo PostgreSQL MCP Server: localhost:3001
 echo 데이터베이스 관리: http://localhost:8080 (개발모드)
 echo API 문서: http://localhost:8000/docs
 echo ==========================================

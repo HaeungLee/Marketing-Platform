@@ -56,6 +56,42 @@ services:
     networks:
       - marketing_dev_network
 
+  # PostgreSQL MCP Server (개발환경)
+  mcp-server-dev:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    container_name: marketing_platform_mcp_dev
+    restart: unless-stopped
+    environment:
+      # 데이터베이스 연결 설정
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-marketing_platform_dev}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      DB_SSL: false
+      
+      # MCP 서버 설정
+      MCP_SERVER_HOST: 0.0.0.0
+      MCP_SERVER_PORT: 3001
+      
+      # 개발환경 설정
+      LOG_LEVEL: debug
+      DEBUG: true
+      MAX_CONNECTIONS: 5
+      CONNECTION_TIMEOUT: 10000
+    volumes:
+      - ./mcp-server:/app  # 소스 코드 마운트 (개발용)
+      - /app/node_modules  # node_modules 볼륨 마운트
+    ports:
+      - "3002:3001"  # 운영환경과 포트 분리
+    depends_on:
+      - postgres
+    networks:
+      - marketing_dev_network
+    command: npm run dev  # 개발 모드로 실행
+
   # 데이터베이스 관리 도구
   adminer:
     image: adminer:latest
