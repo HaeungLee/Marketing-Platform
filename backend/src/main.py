@@ -1,13 +1,18 @@
 """
 FastAPI 메인 애플리케이션
 """
+import sys
+import io
+# Set stdout to support UTF-8 encoding
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import logging
 
 from config.settings import settings
-from presentation.api.v1 import auth, business, content, analysis
+from presentation.api.v1 import auth, business, content, analysis, population
 from infrastructure.ai.ollama_service import OllamaService
 from infrastructure.monitoring.monitoring import MonitoringService, init_instrumentator
 
@@ -27,13 +32,29 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         description="소상공인을 위한 AI 마케팅 플랫폼 API",
         version="1.0.0",
-        debug=settings.debug
+        debug=True  # 디버그 모드 활성화
     )
+    
+    # 예외 핸들러 추가
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        import traceback
+        error_detail = {
+            "error": str(exc),
+            "traceback": traceback.format_exc(),
+            "request_url": str(request.url),
+            "request_method": request.method
+        }
+        logger.error(f"Unhandled exception: {error_detail}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(exc), "traceback": traceback.format_exc() if settings.debug else None}
+        )
 
     # CORS 미들웨어 설정
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=["http://localhost:3000"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -52,10 +73,33 @@ def create_app() -> FastAPI:
     )
 
     # 라우터 등록
-    app.include_router(auth.router, prefix="/api/v1/auth", tags=["인증"])
-    app.include_router(business.router, prefix="/api/v1/business", tags=["비즈니스"])
-    app.include_router(content.router, prefix="/api/v1/content", tags=["콘텐츠"])
-    app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["분석"])
+    print("\n=== 라우터 등록 시작 ===")
+    try:
+        app.include_router(auth.router, prefix="/api/v1/auth", tags=["인증"])
+        print("✅ Auth 라우터 등록 완료")
+        
+        app.include_router(business.router, prefix="/api/v1/business", tags=["비즈니스"])
+        print("✅ Business 라우터 등록 완료")
+        
+        app.include_router(content.router, prefix="/api/v1/content", tags=["콘텐츠"])
+        print("✅ Content 라우터 등록 완료")
+        
+        app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["분석"])
+        print("✅ Analysis 라우터 등록 완료")
+        
+        app.include_router(population.router, prefix="/api/v1/population", tags=["인구통계"])
+        print("✅ Population 라우터 등록 완료")
+        
+        # 등록된 모든 라우트 출력
+        print("\n=== 등록된 모든 라우트 ===")
+        for route in app.routes:
+            if hasattr(route, 'path'):
+                print(f"{route.path} ({', '.join(route.methods)})")
+    except Exception as e:
+        error_msg = f"[ERROR] 라우터 등록 중 오류 발생: {str(e)}"
+        print(error_msg)
+        logging.error(error_msg)
+        raise
 
     @app.on_event("startup")
     async def startup_event():

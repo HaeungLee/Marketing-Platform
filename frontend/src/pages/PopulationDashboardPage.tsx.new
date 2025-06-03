@@ -34,10 +34,20 @@ import {
 } from 'recharts';
 import axios from 'axios';
 
+// Add axios default config
+axios.defaults.baseURL = 'http://localhost:8000';
+
+interface LocationResponse {
+  provinces?: string[];
+  cities?: string[];
+  districts?: string[];
+  [key: string]: any;
+}
+
 interface Location {
   provinces: string[];
-  cities: string[] | null;
-  districts: string[] | null;
+  cities: string[];
+  districts: string[];
 }
 
 interface PopulationData {
@@ -58,7 +68,10 @@ interface PopulationData {
 }
 
 const PopulationDashboardPage: React.FC = () => {
-  const [locations, setLocations] = useState<Location>({ provinces: [], cities: null, districts: null });
+  const [provinces, setProvinces] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [districts, setDistricts] = useState<string[]>([]);
+  
   const [selectedProvince, setSelectedProvince] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [selectedDistrict, setSelectedDistrict] = useState<string>('');
@@ -67,14 +80,20 @@ const PopulationDashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
 
-  // 지역 데이터 로드
+  // 시/도 목록 로드
   useEffect(() => {
-    const fetchLocations = async () => {
+    const fetchProvinces = async () => {
       setIsLoading(true);
       setError(null);
       try {
         const response = await axios.get('/api/v1/population/locations');
-        setLocations(response.data);
+        console.log('Provinces API Response:', response.data);
+        
+        if (Array.isArray(response.data.provinces)) {
+          setProvinces(response.data.provinces);
+        } else {
+          setProvinces([]);
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : '지역 데이터를 불러오는데 실패했습니다.';
         setError(message);
@@ -89,63 +108,95 @@ const PopulationDashboardPage: React.FC = () => {
         setIsLoading(false);
       }
     };
-    fetchLocations();
+    fetchProvinces();
   }, [toast]);
 
-  // 시/도 선택 시 시/군/구 목록 업데이트
+  // 시/군/구 목록 로드
   useEffect(() => {
-    if (selectedProvince) {
-      const fetchCities = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-          const response = await axios.get(`/api/v1/population/locations?province=${selectedProvince}`);
-          setLocations(prev => ({ ...prev, cities: response.data.cities }));
-        } catch (error) {
-          const message = error instanceof Error ? error.message : '시/군/구 데이터를 불러오는데 실패했습니다.';
-          setError(message);
-          toast({
-            title: '데이터 로드 실패',
-            description: message,
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchCities();
+    if (!selectedProvince) {
+      setCities([]);
+      return;
     }
+
+    const fetchCities = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get(`/api/v1/population/locations?province=${selectedProvince}`);
+        console.log('Cities API Response:', response.data);
+        
+        // cities가 객체인 경우 선택된 province에 해당하는 배열을 가져옴
+        const citiesData = response.data.cities?.[selectedProvince] || [];
+        console.log('Processed cities data:', citiesData);
+        
+        if (Array.isArray(citiesData)) {
+          setCities(citiesData);
+        } else {
+          console.log('Cities is not an array, setting empty array');
+          setCities([]);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '시/군/구 데이터를 불러오는데 실패했습니다.';
+        setError(message);
+        toast({
+          title: '데이터 로드 실패',
+          description: message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCities();
+    setSelectedCity('');
+    setSelectedDistrict('');
   }, [selectedProvince, toast]);
 
-  // 시/군/구 선택 시 읍/면/동 목록 업데이트
+  // 읍/면/동 목록 로드
   useEffect(() => {
-    if (selectedProvince && selectedCity) {
-      const fetchDistricts = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-          const response = await axios.get(
-            `/api/v1/population/locations?province=${selectedProvince}&city=${selectedCity}`
-          );
-          setLocations(prev => ({ ...prev, districts: response.data.districts }));
-        } catch (error) {
-          const message = error instanceof Error ? error.message : '읍/면/동 데이터를 불러오는데 실패했습니다.';
-          setError(message);
-          toast({
-            title: '데이터 로드 실패',
-            description: message,
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchDistricts();
+    if (!selectedProvince || !selectedCity) {
+      setDistricts([]);
+      return;
     }
+
+    const fetchDistricts = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get(
+          `/api/v1/population/locations?province=${selectedProvince}&city=${selectedCity}`
+        );
+        console.log('Districts API Response:', response.data);
+        
+        // districts가 중첩 객체인 경우 선택된 province와 city에 해당하는 배열을 가져옴
+        const districtsData = response.data.districts?.[selectedProvince]?.[selectedCity] || [];
+        console.log('Processed districts data:', districtsData);
+        
+        if (Array.isArray(districtsData)) {
+          setDistricts(districtsData);
+        } else {
+          setDistricts([]);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '읍/면/동 데이터를 불러오는데 실패했습니다.';
+        setError(message);
+        toast({
+          title: '데이터 로드 실패',
+          description: message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDistricts();
+    setSelectedDistrict('');
   }, [selectedProvince, selectedCity, toast]);
 
   // 지역 선택 시 인구 통계 데이터 로드
@@ -205,13 +256,9 @@ const PopulationDashboardPage: React.FC = () => {
               <Select
                 placeholder="시/도 선택"
                 value={selectedProvince}
-                onChange={(e) => {
-                  setSelectedProvince(e.target.value);
-                  setSelectedCity('');
-                  setSelectedDistrict('');
-                }}
+                onChange={(e) => setSelectedProvince(e.target.value)}
               >
-                {locations.provinces.map((province) => (
+                {provinces.map((province) => (
                   <option key={province} value={province}>
                     {province}
                   </option>
@@ -226,12 +273,9 @@ const PopulationDashboardPage: React.FC = () => {
               <Select
                 placeholder="시/군/구 선택"
                 value={selectedCity}
-                onChange={(e) => {
-                  setSelectedCity(e.target.value);
-                  setSelectedDistrict('');
-                }}
+                onChange={(e) => setSelectedCity(e.target.value)}
               >
-                {locations.cities?.map((city) => (
+                {cities.map((city) => (
                   <option key={city} value={city}>
                     {city}
                   </option>
@@ -248,7 +292,7 @@ const PopulationDashboardPage: React.FC = () => {
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
               >
-                {locations.districts?.map((district) => (
+                {districts.map((district) => (
                   <option key={district} value={district}>
                     {district}
                   </option>
