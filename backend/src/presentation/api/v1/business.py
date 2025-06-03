@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.config.database import get_db
+from config.database import get_db
 
 router = APIRouter(prefix="/business", tags=["business"])
 
