@@ -26,10 +26,9 @@ class GeminiService(AIService):
         try:
             # 프롬프트 생성
             prompt = self._create_text_prompt(business_info, content_type, target_audience)
-            
-            # Gemini 2.0 Flash 모델 사용 (텍스트 생성)
+              # Gemini 모델 사용 (텍스트 생성)
             response = self.client.models.generate_content(
-                model="gemma-3-27b-it",
+                model="gemma-3-27b-it",  # 현재 사용 가능한 최신 모델 사용
                 contents=prompt
             )
             
@@ -260,6 +259,78 @@ class GeminiService(AIService):
             "gemini-2.0-flash-exp",
             "gemini-2.0-flash-preview-image-generation"
         ]
+        
+    async def measure_performance(self, model_name: str, prompt: str) -> Dict[str, Any]:
+        """
+        모델 성능 측정
+        
+        Args:
+            model_name: 모델명
+            prompt: 테스트 프롬프트
+            
+        Returns:
+            성능 메트릭 딕셔너리 (추론 시간, 메모리 사용량 등)
+        """
+        try:
+            import psutil
+            
+            # 현재 프로세스 정보 가져오기
+            process = psutil.Process(os.getpid())
+            
+            # 측정 시작
+            start_memory = process.memory_info().rss / 1024 / 1024  # MB
+            start_time = time.time()
+              # 모델 실행
+            try:
+                response = self.client.models.generate_content(
+                    model=model_name if model_name else "gemma-3-27b-it",
+                    contents=prompt
+                )
+                
+                # 결과 추출
+                generated_text = ""
+                if hasattr(response, 'candidates') and response.candidates:
+                    if hasattr(response.candidates[0], 'content'):
+                        for part in response.candidates[0].content.parts:
+                            if hasattr(part, 'text'):
+                                generated_text += part.text
+                
+                success = True
+                token_count = len(generated_text.split())
+                
+            except Exception as e:
+                print(f"모델 호출 오류: {e}")
+                success = False
+                token_count = 0
+                generated_text = f"오류 발생: {str(e)}"
+            
+            # 측정 종료
+            end_time = time.time()
+            end_memory = process.memory_info().rss / 1024 / 1024  # MB
+            
+            # 결과 계산
+            inference_time = (end_time - start_time) * 1000  # ms
+            memory_used = end_memory - start_memory
+            
+            return {
+                "model": model_name,
+                "success": success,
+                "inference_time_ms": round(inference_time, 2),
+                "memory_usage_mb": round(memory_used, 2),
+                "token_count": token_count,
+                "sample_output": generated_text[:100] + "..." if len(generated_text) > 100 else generated_text
+            }
+            
+        except Exception as e:
+            print(f"성능 측정 오류: {e}")
+            return {
+                "model": model_name,
+                "success": False,
+                "inference_time_ms": 0,
+                "memory_usage_mb": 0,
+                "token_count": 0,
+                "error": str(e)
+            }
     
     def _get_fallback_content(self, business_info: Dict[str, Any], content_type: str) -> Dict[str, Any]:
         """폴백 콘텐츠 생성"""
@@ -276,6 +347,18 @@ class GeminiService(AIService):
             return {
                 "title": f"{product_name} 신상 출시! 🎉",
                 "content": f"{business_name}의 {product_name}을 만나보세요! ✨\n\n특별한 혜택도 함께 준비했어요 💝\n\n지금 바로 DM 주세요! 📱",
+                "performance_metrics": {"generation_time": 0.1, "word_count": 25}
+            }
+        elif content_type == "youtube":
+            return {
+                "title": f"{product_name} 리뷰 - {business_name}",
+                "content": f"안녕하세요! 오늘은 {business_name}의 {product_name}에 대해 소개해 드릴게요.\n\n이 제품의 특별한 점은 무엇일까요?\n\n영상 끝까지 시청하시고 좋아요, 구독 부탁드립니다!",
+                "performance_metrics": {"generation_time": 0.1, "word_count": 35}
+            }
+        elif content_type == "flyer":
+            return {
+                "title": f"{business_name} 스페셜 프로모션",
+                "content": f"[특별 할인]\n{product_name} 프로모션\n\n지금 구매하시면 20% 할인!\n\n기간: 이번주 한정\n연락처: 000-0000-0000\n주소: 서울시 강남구",
                 "performance_metrics": {"generation_time": 0.1, "word_count": 25}
             }
         else:

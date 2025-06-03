@@ -18,8 +18,7 @@ class Settings(BaseSettings):
     BASE_URL: str = "http://localhost:3000"
     # CORS 설정 - 문자열로 저장하고 파싱하여 사용
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
-    
-    # 모니터링 설정
+      # 모니터링 설정
     discord_webhook_url: Optional[str] = None
     memory_threshold: int = 90
     cpu_threshold: int = 80
@@ -29,6 +28,8 @@ class Settings(BaseSettings):
     google_client_id: str = "207390623047-cgtnd87rimflmcnrrhtal9k7u144ef8n.apps.googleusercontent.com"
     google_client_secret: str = "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"
     google_redirect_uri: str = "http://localhost:3000/auth/google/callback"
+      # 구글 AI API 키
+    google_api_key: str = "AIzaSyDrPzr9VvEUGVU6a87DxyTQNs17_wldqBE"  # 환경 변수 GOOGLE_API_KEY로 재정의할 수 있습니다
 
     # 카카오 OAuth 설정
     kakao_client_id: str = "58abcb4c758b2ac22d34496f4a506894"

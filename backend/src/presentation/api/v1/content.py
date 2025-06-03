@@ -8,8 +8,10 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 import base64
 import os
+import time
+import traceback
 
-from application.interfaces.ai_service import AIService
+from src.application.interfaces.ai_service import AIService
 
 router = APIRouter()
 
@@ -26,6 +28,13 @@ class ContentGenerationRequest(BaseModel):
     target_audience: Optional[Dict[str, Any]] = Field(None, description="타겟 고객층 정보")
     tone: Optional[str] = Field("친근한", description="콘텐츠 톤앤매너")
     keywords: Optional[List[str]] = Field(None, description="포함할 키워드")
+
+
+# 단순화된 콘텐츠 생성 요청 모델
+class SimpleContentGenerationRequest(BaseModel):
+    prompt: str = Field(..., description="생성을 위한 프롬프트")
+    content_type: Optional[str] = Field(default=None, description="콘텐츠 타입", pattern="^(blog|instagram|youtube|flyer)$")
+    tone: Optional[str] = Field(default=None, description="콘텐츠 톤앤매너")
 
 
 class ImageGenerationRequest(BaseModel):
@@ -100,10 +109,11 @@ class AvailableModelsResponse(BaseModel):
 # Dependency injection
 def get_ai_service() -> AIService:
     """AI 서비스 의존성 주입"""
-    # 환경변수에서 API 키 가져오기
-    api_key = os.getenv("GOOGLE_API_KEY", "AIzaSyDrPzr9VvEUGVU6a87DxyTQNs17_wldqBE")
+    # 환경변수나 설정에서 API 키 가져오기
+    from src.config.settings import settings
+    api_key = os.getenv("GOOGLE_API_KEY", settings.google_api_key)
     try:
-        from infrastructure.ai.gemini_service import GeminiService
+        from src.infrastructure.ai.gemini_service import GeminiService
         return GeminiService(api_key)
     except ImportError as e:
         # Gemini 서비스를 사용할 수 없는 경우
@@ -112,8 +122,9 @@ def get_ai_service() -> AIService:
 
 def get_gemini_service():
     """Gemini 서비스 의존성 주입"""
-    # 환경변수에서 API 키 가져오기
-    api_key = os.getenv("GOOGLE_API_KEY", "AIzaSyDrPzr9VvEUGVU6a87DxyTQNs17_wldqBE")
+    # 환경변수나 설정에서 API 키 가져오기
+    from src.config.settings import settings
+    api_key = os.getenv("GOOGLE_API_KEY", settings.google_api_key)
     
     try:
         from google import genai
@@ -277,6 +288,129 @@ async def generate_content(
         )
 
 
+@router.post("/generate/simple", response_model=ContentGenerationResponse)
+async def generate_simple_content(
+    request: SimpleContentGenerationRequest,
+    ai_service: AIService = Depends(get_ai_service)
+):
+    """
+    간단한 프롬프트로 콘텐츠 생성
+    
+    하나의 프롬프트로 마케팅 콘텐츠를 빠르게 생성합니다.
+    """
+    try:
+        # API 키 가져오기
+        from src.config.settings import settings
+        api_key = os.getenv("GOOGLE_API_KEY", settings.google_api_key)
+        if not api_key:
+            raise ValueError("Google API key is not configured")
+        
+        # content_type과 tone에 기본값 설정 (이미 모델에서 설정되어 있지만 안전하게 처리)
+        content_type = request.content_type or "blog"
+        tone = request.tone or "친근한"
+        
+        # 확장된 프롬프트 생성
+        enhanced_prompt = f"""
+콘텐츠 유형: {content_type}
+톤앤매너: {tone}
+
+사용자 프롬프트:
+{request.prompt}
+
+위의 정보를 바탕으로 마케팅 콘텐츠를 작성해주세요. 제목은 첫 줄에 작성해주시고, 나머지 내용은 자연스러운 단락으로 구성해주세요.
+"""
+        
+        # 실행 시간 측정 시작
+        start_time = time.time()
+        
+        try:
+            # Google Generative AI 라이브러리 불러오기
+            import google.generativeai as genai
+            
+            # Google Generative AI 설정
+            genai.configure(api_key=api_key)
+              # 모델 설정 (gemma-3-27b-it 사용)
+            model = genai.GenerativeModel('gemma-3-27b-it')
+            
+            # 모델 호출
+            response = model.generate_content(enhanced_prompt)
+            
+            # 응답 텍스트 추출
+            content_text = response.text if hasattr(response, 'text') else ""
+            
+            if not content_text:
+                raise ValueError("AI 모델에서 콘텐츠를 생성하지 못했습니다.")
+            
+        except ImportError:
+            # 대체 방법으로 시도
+            try:
+                from google import genai
+                
+                # 클라이언트 초기화
+                client = genai.Client(api_key=api_key)
+                  # Gemini 모델 호출
+                response = client.models.generate_content(
+                    model="gemma-3-27b-it",
+                    contents=enhanced_prompt
+                )
+                
+                # 응답 처리
+                content_text = ""
+                if hasattr(response, 'candidates') and response.candidates:
+                    if hasattr(response.candidates[0], 'content') and hasattr(response.candidates[0].content, 'parts'):
+                        for part in response.candidates[0].content.parts:
+                            if hasattr(part, 'text') and part.text:
+                                content_text += part.text
+                
+                if not content_text:
+                    raise ValueError("AI 모델에서 콘텐츠를 생성하지 못했습니다.")
+                
+            except ImportError as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Google Generative AI 라이브러리를 불러올 수 없습니다. 'pip install google-generativeai'를 설치해야 합니다. 오류: {str(e)}"
+                )
+        
+        # 실행 시간 측정 종료
+        end_time = time.time()
+        generation_time = end_time - start_time
+        
+        # 제목과 내용 분리
+        lines = content_text.strip().split('\n')
+        title = lines[0] if lines else "생성된 콘텐츠"
+        content = "\n".join(lines[1:]) if len(lines) > 1 else content_text
+        
+        # 기본 해시태그와 키워드 생성
+        default_hashtags = ["마케팅", "콘텐츠", content_type, tone]
+        keywords = ["마케팅", "콘텐츠", content_type]
+        
+        # 결과 반환
+        return ContentGenerationResponse(
+            content_id=f"simple-content-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            content_type=content_type,
+            title=title,
+            content=content,
+            hashtags=default_hashtags,
+            keywords=keywords,
+            performance_metrics={
+                "generation_time": round(generation_time, 2), 
+                "word_count": len(content_text.split())
+            },
+            created_at=datetime.now()
+        )
+        
+    except Exception as e:
+        # 상세한 오류 로깅
+        print(f"콘텐츠 생성 오류: {str(e)}")
+        traceback.print_exc()
+        
+        # 클라이언트에게 오류 정보 반환
+        raise HTTPException(
+            status_code=500,
+            detail=f"콘텐츠 생성 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
 @router.post("/generate-image", response_model=ImageGenerationResponse)
 async def generate_image(
     request: ImageGenerationRequest,
@@ -284,7 +418,6 @@ async def generate_image(
 ):
     """
     AI 이미지 생성
-    
     주어진 프롬프트를 바탕으로 마케팅에 적합한 이미지를 생성합니다.
     """
     try:
@@ -425,7 +558,6 @@ async def measure_performance(
 ):
     """
     AI 모델 성능 측정
-    
     지정된 모델의 성능을 측정합니다.
     """
     try:

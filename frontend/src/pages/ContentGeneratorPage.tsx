@@ -17,18 +17,16 @@ import {
   FormControl,
   FormLabel,
   Select,
+  Badge,
+  Heading,
 } from "@chakra-ui/react";
 import apiClient from "../services/api";
 import { contentApi } from "../services/apiService";
 import type { ImageGenerationResponse } from "../types/api";
 
 const ContentGeneratorPage: React.FC = () => {
-  // 텍스트 콘텐츠 생성 상태
-  const [businessName, setBusinessName] = useState("");
-  const [businessCategory, setBusinessCategory] = useState("");
-  const [businessDescription, setBusinessDescription] = useState("");
-  const [productName, setProductName] = useState("");
-  const [productDescription, setProductDescription] = useState("");
+  // 단순화된 텍스트 콘텐츠 생성 상태
+  const [prompt, setPrompt] = useState("");
   const [contentType, setContentType] = useState("blog");
   const [tone, setTone] = useState("친근한");
   const [response, setResponse] = useState("");
@@ -43,10 +41,10 @@ const ContentGeneratorPage: React.FC = () => {
 
   const toast = useToast();
   const handleGenerate = async () => {
-    if (!businessName.trim() || !productName.trim()) {
+    if (!prompt.trim()) {
       toast({
         title: "입력 오류",
-        description: "비즈니스명과 상품명을 입력해주세요.",
+        description: "프롬프트를 입력해주세요.",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -55,36 +53,45 @@ const ContentGeneratorPage: React.FC = () => {
     }
 
     setIsLoading(true);
+    console.log("콘텐츠 생성 요청 시작...");
 
     try {
+      // 요청을 단순화: prompt만 포함
       const requestData = {
-        business_id: `business-${Date.now()}`,
-        business_name: businessName,
-        business_category: businessCategory || "일반",
-        business_description:
-          businessDescription || "우수한 서비스를 제공하는 비즈니스",
-        product_name: productName,
-        product_description: productDescription || "고품질의 상품/서비스",
-        content_type: contentType,
-        tone: tone,
-        keywords: [],
+        prompt: prompt.trim(),
+        // content_type과 tone은 백엔드에서 기본값 사용
       };
 
+      console.log("단순화된 요청 데이터:", requestData);
+
+      // CORS 디버깅을 위한 로깅
+      console.log("API 요청 URL:", "http://localhost:8000/api/v1/content/generate/simple");
+
       const response = await fetch(
-        "http://localhost:8001/api/v1/content/generate",
+        "http://localhost:8000/api/v1/content/generate/simple",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Origin": window.location.origin
           },
           body: JSON.stringify(requestData),
+          credentials: "omit" // CORS 이슈 해결을 위해 credentials 제외
         }
       );
 
+      console.log("응답 상태:", response.status);
+      console.log("응답 헤더:", [...response.headers.entries()]);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error("API 오류 응답:", errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
+      
       const data = await response.json();
+      console.log("응답 데이터:", data);
 
       setResponse(data.content);
 
@@ -100,9 +107,9 @@ const ContentGeneratorPage: React.FC = () => {
       toast({
         title: "오류 발생",
         description:
-          error.response?.data?.detail || "콘텐츠 생성 중 오류가 발생했습니다.",
+          error.response?.data?.detail || error.message || "콘텐츠 생성 중 오류가 발생했습니다.",
         status: "error",
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
     } finally {
@@ -127,8 +134,6 @@ const ContentGeneratorPage: React.FC = () => {
     try {
       const result = await contentApi.generateImage({
         prompt: imagePrompt,
-        business_name: businessName || undefined,
-        business_category: businessCategory || undefined,
         style: imageStyle,
       });
 
@@ -181,52 +186,26 @@ const ContentGeneratorPage: React.FC = () => {
           {/* 텍스트 콘텐츠 생성 탭 */}
           <TabPanel>
             <VStack spacing={4} align="stretch">
-              <FormControl>
-                <FormLabel>비즈니스명</FormLabel>
-                <Input
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  placeholder="예: 맛있는 베이커리"
-                />
-              </FormControl>
+              <Box mb={4}>
+                <Heading size="md" mb={3}>빠른 콘텐츠 생성기</Heading>
+                <Text fontSize="sm" color="gray.600">
+                  원하는 내용을 프롬프트로 입력하면 AI가 해당 내용에 맞는 콘텐츠를 생성합니다.
+                  구체적인 프롬프트일수록 더 좋은 결과를 얻을 수 있습니다.
+                </Text>
+              </Box>
 
               <FormControl>
-                <FormLabel>업종/카테고리</FormLabel>
-                <Input
-                  value={businessCategory}
-                  onChange={(e) => setBusinessCategory(e.target.value)}
-                  placeholder="예: 베이커리, 카페, 온라인쇼핑몰"
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>비즈니스 설명</FormLabel>
+                <FormLabel>
+                  프롬프트 입력
+                  <Badge ml={2} colorScheme="green">AI 프롬프트</Badge>
+                </FormLabel>
                 <Textarea
-                  value={businessDescription}
-                  onChange={(e) => setBusinessDescription(e.target.value)}
-                  placeholder="비즈니스에 대한 간단한 설명을 입력하세요..."
-                  rows={2}
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>상품/서비스명</FormLabel>
-                <Input
-                  value={productName}
-                  onChange={(e) => setProductName(e.target.value)}
-                  placeholder="예: 수제 크루아상, 프리미엄 원두"
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>상품/서비스 설명</FormLabel>
-                <Textarea
-                  value={productDescription}
-                  onChange={(e) => setProductDescription(e.target.value)}
-                  placeholder="상품/서비스에 대한 자세한 설명을 입력하세요..."
-                  rows={3}
-                />
-              </FormControl>
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="원하는 마케팅 콘텐츠에 대해 상세히 설명해주세요. 예: '저는 서울 강남에 위치한 프리미엄 베이커리를 운영하고 있습니다. 수제 크루아상의 장점과 특별한 재료를 강조하는 블로그 글을 작성해주세요.'"
+                  rows={6}
+                  size="md"
+                /></FormControl>
 
               <HStack spacing={4}>
                 <FormControl>
@@ -285,24 +264,13 @@ const ContentGeneratorPage: React.FC = () => {
           {/* 이미지 생성 탭 */}
           <TabPanel>
             <VStack spacing={4} align="stretch">
-              <HStack spacing={4}>
-                <FormControl flex={1}>
-                  <FormLabel>비즈니스명</FormLabel>
-                  <Input
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="예: 카페 모카"
-                  />
-                </FormControl>
-                <FormControl flex={1}>
-                  <FormLabel>비즈니스 카테고리</FormLabel>
-                  <Input
-                    value={businessCategory}
-                    onChange={(e) => setBusinessCategory(e.target.value)}
-                    placeholder="예: 카페/음료"
-                  />
-                </FormControl>
-              </HStack>
+              <Box mb={4}>
+                <Heading size="md" mb={3}>AI 이미지 생성기</Heading>
+                <Text fontSize="sm" color="gray.600">
+                  원하는 이미지에 대한 설명을 입력하면 AI가 해당 이미지를 생성합니다.
+                  구체적인 설명일수록 더 좋은 결과를 얻을 수 있습니다.
+                </Text>
+              </Box>
 
               <FormControl>
                 <FormLabel>이미지 스타일</FormLabel>

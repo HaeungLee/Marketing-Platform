@@ -7,12 +7,12 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date
 
-from ....domain.schemas.population import (
+from src.domain.schemas.population import (
     PopulationStatisticsResponse,
     LocationResponse
 )
-from ....domain.models.population import PopulationStatistics
-from ....config.database import get_db
+from src.domain.models.population import PopulationStatistics
+from src.config.database import get_db
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -135,9 +135,8 @@ async def get_population_statistics(
         
         # 최신 데이터순으로 정렬
         query = query.order_by(PopulationStatistics.reference_date.desc())
-        
-        # SQL 쿼리 로깅
-        logger.info(f"Executing SQL: {str(query.statement.compile(compile_kwargs={"literal_binds": True}))}")
+          # SQL 쿼리 로깅
+        logger.info(f"Executing SQL: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
         
         results = query.all()
         logger.info(f"Found {len(results)} matching records")
