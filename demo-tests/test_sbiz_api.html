@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>소상공인 데이터 분석 데모</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .api-section {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 8px;
+            font-weight: 500;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .result-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        .success {
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        .insight-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+        .insight-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .insight-desc {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏪 소상공인 데이터 분석 플랫폼 데모</h1>
+        <p>소상공인시장진흥공단 API를 활용한 실시간 상권 분석 및 인사이트 제공</p>
+    </div>
+
+    <div class="container">
+        <h2>📊 API 데이터 수집 및 분석</h2>
+        
+        <div class="api-section">
+            <h3>🔥 핫플레이스 분석</h3>
+            <p>인기 상권 정보를 분석하여 트렌드를 파악합니다.</p>
+            <button class="btn" onclick="fetchHotPlaceData()">핫플레이스 데이터 가져오기</button>
+            <div id="hotplace-result" class="result-box" style="display:none;"></div>
+        </div>
+
+        <div class="api-section">
+            <h3>🗺️ 상권지도 분석</h3>
+            <p>창업 공공 데이터를 활용한 상권 분석을 제공합니다.</p>
+            <button class="btn" onclick="fetchCommercialAreaData()">상권지도 데이터 가져오기</button>
+            <div id="commercial-result" class="result-box" style="display:none;"></div>
+        </div>
+
+        <div class="api-section">
+            <h3>📈 매출추이 분석</h3>
+            <p>업종별 매출 변화 추이를 분석합니다.</p>
+            <button class="btn" onclick="fetchSalesData()">매출추이 데이터 가져오기</button>
+            <div id="sales-result" class="result-box" style="display:none;"></div>
+        </div>
+
+        <div class="api-section">
+            <h3>🔍 간단분석</h3>
+            <p>상권에 대한 종합적인 간단 분석을 제공합니다.</p>
+            <button class="btn" onclick="fetchSimpleAnalysis()">간단분석 데이터 가져오기</button>
+            <div id="simple-result" class="result-box" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📈 데이터 시각화</h2>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="total-businesses">-</div>
+                <div class="stat-label">총 사업체 수</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avg-sales">-</div>
+                <div class="stat-label">평균 매출액</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="growth-rate">-</div>
+                <div class="stat-label">성장률</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="hot-areas">-</div>
+                <div class="stat-label">핫플레이스 수</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="salesChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="areaChart"></canvas>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>💡 AI 인사이트</h2>
+        <div id="insights-container">
+            <div class="insight-card">
+                <div class="insight-title">데이터 수집 준비 완료</div>
+                <div class="insight-desc">위의 버튼들을 클릭하여 실제 소상공인 데이터를 수집하고 분석을 시작하세요.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 데이터 시각화 (Iframe)</h2>
+        <iframe src="https://bigdata.sbiz.or.kr/#/openApi/hpReport?certKey=7794d741d33deb6e8f76ac8332aaa3728f4e5f7979622ca2440410786e939415" 
+                width="100%" height="600" style="border: none;"></iframe>
+    </div>
+
+    <script>
+        // API 키 정보
+        const API_KEYS = {
+            hotplace: '7794d741d33deb6e8f76ac8332aaa3728f4e5f7979622ca2440410786e939415',
+            commercial: '2d2f5787eefef5f04b9420f1de7065800c5e7e0f5c3bb8716dc15905d93dfe12',
+            sales: '83c9619da7b8a762caee43281fc625ff9cb4da6f4902b00f2c46fbf8f51df606',
+            simple: '2ef6b4121693d2cf8f157ea952b2d2451bc30d606988fb13ad82e53b892b36d8'
+        };
+
+        // 차트 객체들
+        let salesChart = null;
+        let areaChart = null;
+
+        // 전역 데이터 저장소
+        let globalData = {
+            hotplace: null,
+            commercial: null,
+            sales: null,
+            simple: null
+        };
+
+        // 유틸리티 함수들
+        function showLoading(containerId) {
+            document.getElementById(containerId).style.display = 'block';
+            document.getElementById(containerId).innerHTML = '<div class="loading">데이터를 가져오는 중...</div>';
+        }
+
+        function showError(containerId, message) {
+            document.getElementById(containerId).innerHTML = `<div class="error">❌ 오류: ${message}</div>`;
+        }
+
+        function showSuccess(containerId, data) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="success">✅ 데이터 수집 성공!</div>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+        }
+
+        // 핫플레이스 데이터 가져오기
+        async function fetchHotPlaceData() {
+            showLoading('hotplace-result');
+            
+            try {
+                // 실제 API 호출 (CORS 문제로 인해 프록시 서버 필요)
+                // 임시로 목업 데이터 사용
+                const mockData = {
+                    resultCode: "200",
+                    resultMsg: "SUCCESS",
+                    data: [
+                        {
+                            areaName: "강남구 역삼동",
+                            hotScore: 85.5,
+                            businessCount: 1250,
+                            avgSales: 2500000,
+                            growthRate: 12.3,
+                            mainCategory: "음식점업",
+                            trend: "상승"
+                        },
+                        {
+                            areaName: "마포구 홍대입구",
+                            hotScore: 78.2,
+                            businessCount: 980,
+                            avgSales: 1800000,
+                            growthRate: 8.7,
+                            mainCategory: "주점업",
+                            trend: "상승"
+                        },
+                        {
+                            areaName: "종로구 명동",
+                            hotScore: 72.1,
+                            businessCount: 650,
+                            avgSales: 3200000,
+                            growthRate: -2.1,
+                            mainCategory: "소매업",
+                            trend: "하락"
+                        }
+                    ]
+                };
+
+                globalData.hotplace = mockData;
+                showSuccess('hotplace-result', mockData);
+                updateStats();
+                updateInsights();
+                drawCharts();
+                
+            } catch (error) {
+                showError('hotplace-result', error.message);
+            }
+        }
+
+        // 상권지도 데이터 가져오기
+        async function fetchCommercialAreaData() {
+            showLoading('commercial-result');
+            
+            try {
+                const mockData = {
+                    resultCode: "200",
+                    resultMsg: "SUCCESS",
+                    data: {
+                        totalAreas: 45,
+                        categories: [
+                            { name: "음식점", count: 15, percentage: 33.3 },
+                            { name: "카페", count: 12, percentage: 26.7 },
+                            { name: "소매업", count: 8, percentage: 17.8 },
+                            { name: "서비스업", count: 6, percentage: 13.3 },
+                            { name: "기타", count: 4, percentage: 8.9 }
+                        ],
+                        averageRent: 85000,
+                        footTraffic: 12500,
+                        competitionLevel: "보통"
+                    }
+                };
+
+                globalData.commercial = mockData;
+                showSuccess('commercial-result', mockData);
+                updateStats();
+                updateInsights();
+                drawCharts();
+                
+            } catch (error) {
+                showError('commercial-result', error.message);
+            }
+        }
+
+        // 매출추이 데이터 가져오기
+        async function fetchSalesData() {
+            showLoading('sales-result');
+            
+            try {
+                const mockData = {
+                    resultCode: "200",
+                    resultMsg: "SUCCESS",
+                    data: {
+                        period: "2024년 1월-12월",
+                        monthlySales: [
+                            { month: "1월", sales: 180000000 },
+                            { month: "2월", sales: 165000000 },
+                            { month: "3월", sales: 195000000 },
+                            { month: "4월", sales: 210000000 },
+                            { month: "5월", sales: 225000000 },
+                            { month: "6월", sales: 240000000 },
+                            { month: "7월", sales: 235000000 },
+                            { month: "8월", sales: 255000000 },
+                            { month: "9월", sales: 245000000 },
+                            { month: "10월", sales: 220000000 },
+                            { month: "11월", sales: 205000000 },
+                            { month: "12월", sales: 280000000 }
+                        ],
+                        totalSales: 2655000000,
+                        averageMonthlySales: 221250000,
+                        peakMonth: "12월",
+                        lowestMonth: "2월"
+                    }
+                };
+
+                globalData.sales = mockData;
+                showSuccess('sales-result', mockData);
+                updateStats();
+                updateInsights();
+                drawCharts();
+                
+            } catch (error) {
+                showError('sales-result', error.message);
+            }
+        }
+
+        // 간단분석 데이터 가져오기
+        async function fetchSimpleAnalysis() {
+            showLoading('simple-result');
+            
+            try {
+                const mockData = {
+                    resultCode: "200",
+                    resultMsg: "SUCCESS",
+                    data: {
+                        overallScore: 76.5,
+                        recommendation: "창업 추천",
+                        riskLevel: "보통",
+                        marketSize: "중간",
+                        competitionLevel: "높음",
+                        successProbability: 68.2,
+                        keyFactors: [
+                            "높은 유동인구",
+                            "다양한 연령층",
+                            "대중교통 접근성 우수",
+                            "경쟁업체 밀집"
+                        ],
+                        suggestions: [
+                            "차별화된 메뉴 개발 필요",
+                            "디지털 마케팅 강화",
+                            "고객 서비스 품질 향상"
+                        ]
+                    }
+                };
+
+                globalData.simple = mockData;
+                showSuccess('simple-result', mockData);
+                updateStats();
+                updateInsights();
+                drawCharts();
+                
+            } catch (error) {
+                showError('simple-result', error.message);
+            }
+        }
+
+        // 통계 업데이트
+        function updateStats() {
+            if (globalData.hotplace) {
+                const totalBusinesses = globalData.hotplace.data.reduce((sum, item) => sum + item.businessCount, 0);
+                document.getElementById('total-businesses').textContent = totalBusinesses.toLocaleString();
+                
+                const avgSales = globalData.hotplace.data.reduce((sum, item) => sum + item.avgSales, 0) / globalData.hotplace.data.length;
+                document.getElementById('avg-sales').textContent = (avgSales / 10000).toFixed(0) + '만원';
+                
+                const avgGrowth = globalData.hotplace.data.reduce((sum, item) => sum + item.growthRate, 0) / globalData.hotplace.data.length;
+                document.getElementById('growth-rate').textContent = avgGrowth.toFixed(1) + '%';
+                
+                document.getElementById('hot-areas').textContent = globalData.hotplace.data.length;
+            }
+        }
+
+        // 인사이트 업데이트
+        function updateInsights() {
+            const container = document.getElementById('insights-container');
+            let insights = [];
+
+            if (globalData.hotplace) {
+                const topArea = globalData.hotplace.data.reduce((prev, current) => 
+                    (prev.hotScore > current.hotScore) ? prev : current
+                );
+                insights.push({
+                    title: `🏆 최고 핫플레이스: ${topArea.areaName}`,
+                    desc: `핫스코어 ${topArea.hotScore}점으로 가장 높은 인기를 보이고 있습니다. ${topArea.mainCategory} 업종이 주를 이루며, 성장률 ${topArea.growthRate}%를 기록했습니다.`
+                });
+            }
+
+            if (globalData.sales) {
+                const peakSales = Math.max(...globalData.sales.data.monthlySales.map(m => m.sales));
+                const peakMonth = globalData.sales.data.monthlySales.find(m => m.sales === peakSales);
+                insights.push({
+                    title: `📊 매출 피크: ${peakMonth.month}`,
+                    desc: `${peakMonth.month}에 ${(peakSales / 100000000).toFixed(1)}억원으로 최고 매출을 기록했습니다. 연말 시즌 효과가 뚜렷하게 나타났습니다.`
+                });
+            }
+
+            if (globalData.simple) {
+                const score = globalData.simple.data.overallScore;
+                insights.push({
+                    title: `🎯 종합 평가: ${score}점`,
+                    desc: `${globalData.simple.data.recommendation} 등급으로 성공 확률 ${globalData.simple.data.successProbability}%입니다. ${globalData.simple.data.keyFactors.join(', ')} 등의 장점이 있습니다.`
+                });
+            }
+
+            if (insights.length > 0) {
+                container.innerHTML = insights.map(insight => `
+                    <div class="insight-card">
+                        <div class="insight-title">${insight.title}</div>
+                        <div class="insight-desc">${insight.desc}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 차트 그리기
+        function drawCharts() {
+            // 매출추이 차트
+            if (globalData.sales && !salesChart) {
+                const ctx = document.getElementById('salesChart').getContext('2d');
+                salesChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: globalData.sales.data.monthlySales.map(m => m.month),
+                        datasets: [{
+                            label: '월별 매출액 (억원)',
+                            data: globalData.sales.data.monthlySales.map(m => m.sales / 100000000),
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '2024년 월별 매출 추이'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '매출액 (억원)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 상권 분포 차트
+            if (globalData.commercial && !areaChart) {
+                const ctx = document.getElementById('areaChart').getContext('2d');
+                areaChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: globalData.commercial.data.categories.map(c => c.name),
+                        datasets: [{
+                            data: globalData.commercial.data.categories.map(c => c.count),
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.8)',
+                                'rgba(54, 162, 235, 0.8)',
+                                'rgba(255, 205, 86, 0.8)',
+                                'rgba(75, 192, 192, 0.8)',
+                                'rgba(153, 102, 255, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 205, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '업종별 상권 분포'
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('소상공인 데이터 분석 플랫폼 초기화 완료');
+        });
+    </script>
+</body>
+</html>

@@ -48,7 +48,7 @@ const FlyerGenerator: React.FC = () => {
         return true;
       }
       
-      // JPEG 시그니처 확인  
+      // JPEG 시그니처 확인
       if (base64Data.startsWith('/9j/')) {
         return true;
       }
