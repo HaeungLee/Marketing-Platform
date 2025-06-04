@@ -9,12 +9,13 @@ import os
 import logging
 
 # API 라우터 임포트
-from src.presentation.api.v1.auth import router as auth_router
-from src.presentation.api.v1.business import router as business_router
-from src.presentation.api.v1.content import router as content_router
-from src.presentation.api.v1.analysis import router as analysis_router
-from src.presentation.api.population import router as population_router
-from src.presentation.api.image_router import router as image_router
+from .presentation.api.v1.auth import router as auth_router
+from .presentation.api.v1.business import router as business_router
+from .presentation.api.v1.content import router as content_router
+from .presentation.api.v1.analysis import router as analysis_router
+from .presentation.api.v1.insights import router as insights_router
+from .presentation.api.population import router as population_router
+from .presentation.api.image_router import router as image_router
 # 테스트 라우터는 개발 환경에서만 필요할 경우 조건부로 임포트
 # from src.presentation.api.v1.test import router as test_router
 
@@ -60,12 +61,12 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health_check():
         return {"status": "healthy"}
-    
-    # API 라우터 등록
+      # API 라우터 등록
     app.include_router(auth_router, prefix="/api/v1/auth", tags=["인증"])
     app.include_router(business_router, prefix="/api/v1", tags=["비즈니스"])
     app.include_router(content_router, prefix="/api/v1/content", tags=["콘텐츠"])
     app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["분석"])
+    app.include_router(insights_router, prefix="/api/v1", tags=["인사이트"])
     app.include_router(population_router, prefix="/api/v1/population", tags=["인구통계"])
     app.include_router(image_router)  # image_router는 이미 prefix가 설정되어 있음
     # 테스트 라우터는 개발 환경에서만 필요할 경우 조건부로 등록

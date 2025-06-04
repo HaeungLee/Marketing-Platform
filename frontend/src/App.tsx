@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import BusinessSetupPage from "./pages/BusinessSetupPage";
 import ContentGeneratorPage from "./pages/ContentGeneratorPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import RealDataInsightsPage from "./pages/RealDataInsightsPage";
 import SettingsPage from "./pages/SettingsPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
@@ -38,10 +39,10 @@ function App() {
               </ErrorBoundary>
             }
           />
-          <Route path="business/setup" element={<BusinessSetupPage />} />
-          <Route path="content" element={<ContentGeneratorPage />} />
+          <Route path="business/setup" element={<BusinessSetupPage />} />          <Route path="content" element={<ContentGeneratorPage />} />
           <Route path="flyer" element={<FlyerGenerator />} />
           <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="insights" element={<RealDataInsightsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="sbiz365" element={<Sbiz365 />} />
         </Route>
