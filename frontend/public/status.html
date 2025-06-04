@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Status Check</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔍 System Status Check</h1>
+    <div id="results"></div>
+
+    <script>
+        async function checkStatus() {
+            const results = document.getElementById('results');
+            
+            function addResult(message, type = 'info') {
+                const div = document.createElement('div');
+                div.className = `status ${type}`;
+                div.textContent = message;
+                results.appendChild(div);
+            }
+            
+            // Check frontend
+            addResult('✅ Frontend is running (you can see this page)', 'success');
+            
+            // Check backend test endpoint
+            try {
+                const response = await fetch('/api/images/test');
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`✅ Backend test endpoint: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    addResult(`❌ Backend test endpoint failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Backend test endpoint error: ${error.message}`, 'error');
+            }
+            
+            // Check backend generate endpoint
+            try {
+                const response = await fetch('/api/images/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: 'test image' })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`✅ Backend generate endpoint: image_data length ${data.image_data?.length || 'N/A'}`, 'success');
+                } else {
+                    addResult(`❌ Backend generate endpoint failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Backend generate endpoint error: ${error.message}`, 'error');
+            }
+            
+            // Check Fabric.js availability
+            try {
+                const { Canvas } = await import('fabric');
+                addResult('✅ Fabric.js v6 is available via ES modules', 'success');
+                
+                // Test canvas creation
+                const testCanvas = document.createElement('canvas');
+                testCanvas.width = 100;
+                testCanvas.height = 100;
+                const fabricCanvas = new Canvas(testCanvas);
+                addResult('✅ Fabric.js Canvas creation works', 'success');
+                fabricCanvas.dispose();
+            } catch (error) {
+                addResult(`❌ Fabric.js error: ${error.message}`, 'error');
+            }
+        }
+        
+        checkStatus();
+    </script>
+</body>
+</html>

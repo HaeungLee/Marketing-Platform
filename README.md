@@ -40,7 +40,7 @@
 
 - **Framework**: FastAPI (Python 3.9+)
 - **Architecture**: Clean Architecture (Domain-Driven Design)
-- **AI Service**: Ollama (로컬 LLM)
+- **AI Service**: Google Gemini API
 - **Testing**: pytest (TDD 방식)
 - **Design Patterns**: SOLID 원칙 준수
 
@@ -122,9 +122,6 @@ NAVER_CLIENT_ID=your-naver-client-id
 NAVER_CLIENT_SECRET=your-naver-client-secret
 KAKAO_CLIENT_ID=your-kakao-client-id
 GOOGLE_CLIENT_ID=your-google-client-id
-# Ollama 설정
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODELS=gemma3:1b
 
 # 서버 실행
 python run.py
@@ -168,19 +165,9 @@ npm test
 
 백엔드의 `src/config/settings.py`에서 다음 설정을 확인:
 
-- `OLLAMA_BASE_URL`: Ollama 서버 주소 (기본: http://localhost:11434)
+- `GOOGLE_API_KEY`: Google Gemini API 키
 - `CORS_ORIGINS`: CORS 허용 도메인
 - `DEBUG`: 디버그 모드 설정
-
-### AI 모델 설정
-
-Ollama를 사용하여 로컬 LLM을 실행:
-
-```bash
-# Ollama 설치 후
-ollama pull gemma3  # 또는 다른 모델
-ollama serve
-```
 
 ## 📱 페이지 구성
 

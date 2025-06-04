@@ -1,70 +1,73 @@
 """
-User 엔티티 구현
-SOLID 원칙과 Clean Architecture 준수
+사용자 엔티티
 """
+from sqlalchemy import Column, String, Boolean, DateTime, Enum as SQLAlchemyEnum, ForeignKey, Integer
+from sqlalchemy.orm import relationship
 from datetime import datetime
-from dataclasses import dataclass, field
-from typing import Optional
+import uuid
 
-from domain.value_objects.email import Email
+from config.database import Base
+from domain.entities.user_type import UserType
 
+class User(Base):
+    __tablename__ = "users"
 
-@dataclass
-class User:
-    """사용자 엔티티"""
+    uuid = Column(Integer, primary_key=True, autoincrement=True)  # SERIAL PRIMARY KEY
+    id = Column(String(36), unique=True, nullable=False)          # UUID, UNIQUE, NOT NULL
+    email = Column(String, unique=True, nullable=False, index=True)
+    username = Column(String(50), nullable=False)
+    hashed_password = Column(String, nullable=False)
+    user_type = Column(SQLAlchemyEnum(UserType), nullable=False)
+    phone = Column(String(20), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    id: str
-    email: Email
-    username: str
-    hashed_password: str
-    is_active: bool = True
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
-    social_provider: Optional[str] = None  # 'google', 'naver', 'kakao'
-    social_id: Optional[str] = None
-    
-    def __post_init__(self):
-        """생성 후 유효성 검증"""
-        self._validate_username()
-    
-    def _validate_username(self):
-        """사용자명 유효성 검증"""
-        if not self.username or not self.username.strip():
-            raise ValueError("Username cannot be empty")
-        
-        if len(self.username) < 2:
-            raise ValueError("Username must be at least 2 characters long")
-        
-        if len(self.username) > 50:
-            raise ValueError("Username must be less than 50 characters")
-    
-    def deactivate(self):
-        """사용자 비활성화"""
-        self.is_active = False
-        self.updated_at = datetime.utcnow()
-    
-    def activate(self):
-        """사용자 활성화"""
-        self.is_active = True
-        self.updated_at = datetime.utcnow()
-    
-    def update_password(self, new_hashed_password: str):
-        """비밀번호 업데이트"""
-        if not new_hashed_password:
-            raise ValueError("Password cannot be empty")
-        
-        self.hashed_password = new_hashed_password
-        self.updated_at = datetime.utcnow()
-    
-    def update_username(self, new_username: str):
-        """사용자명 업데이트"""
-        old_username = self.username
-        self.username = new_username
-        
-        try:
-            self._validate_username()
-            self.updated_at = datetime.utcnow()
-        except ValueError:
-            # 유효성 검증 실패 시 원래 값으로 복원
-            self.username = old_username
-            raise
+    # OAuth 관련 필드
+    social_provider = Column(String, nullable=True)
+    social_id = Column(String, nullable=True)
+
+    # 관계 설정
+    business_profile = relationship("BusinessProfile", back_populates="user", uselist=False)
+
+class BusinessProfile(Base):
+    __tablename__ = "business_profiles"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    users_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    business_name = Column(String(100), nullable=False)
+    business_registration_number = Column(String(20), nullable=False, unique=True)
+    business_type = Column(String(50), nullable=False)  # 업종
+    business_category = Column(String(50), nullable=False)  # 업태
+    address = Column(String(200), nullable=False)
+    representative_name = Column(String(50), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # 관계 설정
+    user = relationship("User", back_populates="business_profile")
+
+class EmailVerification(Base):
+    __tablename__ = "email_verifications"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String, nullable=False, index=True)
+    code = Column(String, nullable=False)
+    verified = Column(Boolean, default=False)
+    verified_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class PasswordReset(Base):
+    __tablename__ = "password_resets"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    users_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    token = Column(String, nullable=False, unique=True)
+    used = Column(Boolean, default=False)
+    used_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # 관계 설정
+    user = relationship("User", backref="password_resets")

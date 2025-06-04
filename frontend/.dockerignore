@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.gitattributes
+README.md
+DOCKER_GUIDE.md
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# 환경변수
+.env
+.env.*
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+
+# 개발 파일
+src/
+public/
+*.ts
+*.tsx
+*.js
+*.jsx
+tsconfig.json
+vite.config.ts
+package*.json
+
+# 빌드 결과만 유지
+# dist/ 폴더는 포함 (빌드 결과)
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 임시 파일
+*.tmp
+*.bak
+*.swp
+*~
+
+# 테스트
+test-*
+*-test

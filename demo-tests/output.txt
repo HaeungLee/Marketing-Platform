@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "d:\FinalProjects\Marketing-Platform\demo-tests\test_sbiz_simple.py", line 240, in <module>
+    result = test_api()
+  File "d:\FinalProjects\Marketing-Platform\demo-tests\test_sbiz_simple.py", line 20, in test_api
+    print("\U0001f3ea 소상공인 API 테스트 시작")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f3ea' in position 0: illegal multibyte sequence

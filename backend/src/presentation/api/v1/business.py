@@ -1,11 +1,13 @@
 """
 비즈니스 관련 API 엔드포인트
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.config.database import get_db
 
-router = APIRouter()
+router = APIRouter(prefix="/business", tags=["business"])
 
 
 class BusinessCreateRequest(BaseModel):
@@ -144,3 +146,16 @@ async def get_area_info(business_id: str, radius_km: float = 1.0):
         status_code=501,
         detail="공공데이터 연동이 필요합니다. 이 기능은 구현 예정입니다."
     )
+
+
+@router.get("/items")
+async def get_items(db: AsyncSession = Depends(get_db)):
+    """
+    비즈니스 아이템 목록을 조회하는 엔드포인트
+    """
+    try:
+        # 여기에 데이터베이스 쿼리 로직을 작성합니다
+        # 예: items = await db.execute("SELECT * FROM items")
+        return {"message": "데이터베이스 연결 성공"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

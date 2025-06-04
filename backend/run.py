@@ -6,15 +6,17 @@ import uvicorn
 import sys
 import os
 
-# Add the src directory to Python path
-#sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Add both backend and src directories to Python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+sys.path.insert(0, os.path.join(current_dir, 'src'))
 
 if __name__ == "__main__":
     uvicorn.run(
-        "main:app",
+        "src.main:create_app",
         host="0.0.0.0",
         port=8000,
         reload=True,
-        reload_dirs=["src"]
+        reload_dirs=["src"],
+        factory=True
     )

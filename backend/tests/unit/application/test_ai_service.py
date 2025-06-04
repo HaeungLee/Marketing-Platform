@@ -10,7 +10,6 @@ from unittest.mock import AsyncMock, Mock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
 
 from application.interfaces.ai_service import AIService
-from infrastructure.ai.ollama_service import OllamaService
 
 
 class TestAIService:

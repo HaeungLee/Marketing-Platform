@@ -1,288 +1,344 @@
-import React, { useState } from 'react'
+import React, { useState } from "react";
 import {
   Box,
   Text,
   VStack,
   HStack,
-  Card,
-  CardBody,
-  CardHeader,
   Button,
   Textarea,
-  Select,
   Input,
-  Badge,
-  Grid,
-  GridItem,
   useToast,
-  Spinner,
-  IconButton,
-  Divider,
+  Image,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
   FormControl,
   FormLabel,
-} from '@chakra-ui/react'
-import { FaInstagram, FaBlog, FaYoutube, FaFileAlt, FaCopy, FaSync, FaRobot } from 'react-icons/fa'
-
-interface GeneratedContent {
-  type: 'blog' | 'instagram' | 'youtube' | 'flyer'
-  title: string
-  content: string
-  hashtags: string[]
-}
+  Select,
+  Badge,
+  Heading,
+} from "@chakra-ui/react";
+import apiClient from "../services/api";
+import { contentApi } from "../services/apiService";
+import type { ImageGenerationResponse } from "../types/api";
 
 const ContentGeneratorPage: React.FC = () => {
-  const [selectedType, setSelectedType] = useState<'blog' | 'instagram' | 'youtube' | 'flyer'>('blog')
-  const [prompt, setPrompt] = useState('')
-  const [product, setProduct] = useState('')
-  const [tone, setTone] = useState('friendly')
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null)
-  const toast = useToast()
+  // 단순화된 텍스트 콘텐츠 생성 상태
+  const [prompt, setPrompt] = useState("");
+  const [contentType, setContentType] = useState("blog");
+  const [tone, setTone] = useState("친근한");
+  const [response, setResponse] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const contentTypes = [
-    { id: 'blog', label: '네이버 블로그', icon: FaBlog, color: 'green' },
-    { id: 'instagram', label: '인스타그램', icon: FaInstagram, color: 'pink' },
-    { id: 'youtube', label: '유튜브 숏폼', icon: FaYoutube, color: 'red' },
-    { id: 'flyer', label: '전단지', icon: FaFileAlt, color: 'blue' },
-  ]
+  // 이미지 생성 상태
+  const [imagePrompt, setImagePrompt] = useState("");
+  const [imageStyle, setImageStyle] = useState("professional");
+  const [generatedImage, setGeneratedImage] =
+    useState<ImageGenerationResponse | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(false);
 
-  const toneOptions = [
-    { value: 'friendly', label: '친근한' },
-    { value: 'professional', label: '전문적인' },
-    { value: 'casual', label: '캐주얼한' },
-    { value: 'formal', label: '격식 있는' },
-  ]
-
+  const toast = useToast();
   const handleGenerate = async () => {
-    if (!prompt.trim() || !product.trim()) {
+    if (!prompt.trim()) {
       toast({
-        title: '입력 오류',
-        description: '상품 정보와 홍보 내용을 모두 입력해주세요.',
-        status: 'error',
+        title: "입력 오류",
+        description: "프롬프트를 입력해주세요.",
+        status: "error",
         duration: 3000,
         isClosable: true,
-      })
-      return
+      });
+      return;
     }
 
-    setIsGenerating(true)
-    
-    // 시뮬레이션된 AI 콘텐츠 생성
-    setTimeout(() => {
-      const mockContent = {
-        type: selectedType,
-        title: `${product} - 특별 할인 이벤트!`,
-        content: `${product}에 대한 ${tone} 톤의 마케팅 콘텐츠입니다.\n\n${prompt}\n\n지금 바로 문의하세요!`,
-        hashtags: ['마케팅', '할인', '이벤트', product.replace(/\s+/g, '')],
+    setIsLoading(true);
+    console.log("콘텐츠 생성 요청 시작...");
+
+    try {
+      // 요청을 단순화: prompt만 포함
+      const requestData = {
+        prompt: prompt.trim(),
+        // content_type과 tone은 백엔드에서 기본값 사용
+      };
+
+      console.log("단순화된 요청 데이터:", requestData);
+
+      // CORS 디버깅을 위한 로깅
+      console.log("API 요청 URL:", "http://localhost:8000/api/v1/content/generate/simple");
+
+      const response = await fetch(
+        "http://localhost:8000/api/v1/content/generate/simple",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Origin": window.location.origin
+          },
+          body: JSON.stringify(requestData),
+          credentials: "omit" // CORS 이슈 해결을 위해 credentials 제외
+        }
+      );
+
+      console.log("응답 상태:", response.status);
+      console.log("응답 헤더:", [...response.headers.entries()]);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API 오류 응답:", errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
       
-      setGeneratedContent(mockContent)
-      setIsGenerating(false)
-      
+      const data = await response.json();
+      console.log("응답 데이터:", data);
+
+      setResponse(data.content);
+
       toast({
-        title: '콘텐츠 생성 완료',
-        description: '새로운 마케팅 콘텐츠가 생성되었습니다.',
-        status: 'success',
+        title: "성공",
+        description: "콘텐츠가 성공적으로 생성되었습니다!",
+        status: "success",
         duration: 3000,
         isClosable: true,
-      })
-    }, 2000)
-  }
+      });
+    } catch (error: any) {
+      console.error("콘텐츠 생성 오류:", error);
+      toast({
+        title: "오류 발생",
+        description:
+          error.response?.data?.detail || error.message || "콘텐츠 생성 중 오류가 발생했습니다.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast({
-      title: '복사 완료',
-      description: '클립보드에 복사되었습니다.',
-      status: 'success',
-      duration: 2000,
-      isClosable: true,
-    })
-  }
+  const handleImageGenerate = async () => {
+    if (!imagePrompt.trim()) {
+      toast({
+        title: "입력 오류",
+        description: "이미지 프롬프트를 입력해주세요.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setIsImageLoading(true);
+
+    try {
+      const result = await contentApi.generateImage({
+        prompt: imagePrompt,
+        style: imageStyle,
+      });
+
+      if (result.success) {
+        setGeneratedImage(result);
+        toast({
+          title: "성공",
+          description: "이미지가 성공적으로 생성되었습니다!",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: "생성 실패",
+          description: result.error || "이미지 생성에 실패했습니다.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "오류 발생",
+        description:
+          error.response?.data?.detail || "이미지 생성 중 오류가 발생했습니다.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsImageLoading(false);
+    }
+  };
 
   return (
-    <Box>
+    <Box p={6}>
       <Text fontSize="2xl" fontWeight="bold" mb={6}>
         AI 콘텐츠 생성
       </Text>
-      
-      <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={6}>
-        <GridItem>
-          <Card>
-            <CardHeader>
-              <HStack justify="space-between">
-                <Text fontSize="lg" fontWeight="bold">콘텐츠 생성 설정</Text>
-                <Badge colorScheme={contentTypes.find(t => t.id === selectedType)?.color || 'gray'}>
-                  {contentTypes.find(t => t.id === selectedType)?.label}
-                </Badge>
-              </HStack>
-            </CardHeader>
-            <CardBody>
-              <VStack spacing={4} align="stretch">
-                {/* Content Type Selection */}
-                <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-                  {contentTypes.map((type) => (
-                    <GridItem key={type.id}>
-                      <Card
-                        cursor="pointer"
-                        bg={selectedType === type.id ? `${type.color}.50` : 'white'}
-                        borderColor={selectedType === type.id ? `${type.color}.200` : 'gray.200'}
-                        borderWidth="2px"
-                        onClick={() => setSelectedType(type.id as any)}
-                        _hover={{ transform: 'translateY(-2px)', shadow: 'md' }}
-                        transition="all 0.2s"
-                      >
-                        <CardBody p={4} textAlign="center">
-                          <VStack spacing={2}>
-                            <Box as={type.icon} size="24px" color={`${type.color}.500`} />
-                            <Text fontSize="sm" fontWeight="medium">{type.label}</Text>
-                          </VStack>
-                        </CardBody>
-                      </Card>
-                    </GridItem>
-                  ))}
-                </Grid>
 
-                <Divider />
+      <Tabs>
+        <TabList>
+          <Tab>텍스트 콘텐츠</Tab>
+          <Tab>이미지 생성</Tab>
+        </TabList>
 
-                {/* Product Input */}
+        <TabPanels>
+          {" "}
+          {/* 텍스트 콘텐츠 생성 탭 */}
+          <TabPanel>
+            <VStack spacing={4} align="stretch">
+              <Box mb={4}>
+                <Heading size="md" mb={3}>빠른 콘텐츠 생성기</Heading>
+                <Text fontSize="sm" color="gray.600">
+                  원하는 내용을 프롬프트로 입력하면 AI가 해당 내용에 맞는 콘텐츠를 생성합니다.
+                  구체적인 프롬프트일수록 더 좋은 결과를 얻을 수 있습니다.
+                </Text>
+              </Box>
+
+              <FormControl>
+                <FormLabel>
+                  프롬프트 입력
+                  <Badge ml={2} colorScheme="green">AI 프롬프트</Badge>
+                </FormLabel>
+                <Textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="원하는 마케팅 콘텐츠에 대해 상세히 설명해주세요. 예: '저는 서울 강남에 위치한 프리미엄 베이커리를 운영하고 있습니다. 수제 크루아상의 장점과 특별한 재료를 강조하는 블로그 글을 작성해주세요.'"
+                  rows={6}
+                  size="md"
+                /></FormControl>
+
+              <HStack spacing={4}>
                 <FormControl>
-                  <FormLabel>홍보할 상품/서비스</FormLabel>
-                  <Input
-                    placeholder="예: 수제 케이크, 헤어컷 서비스, 온라인 쇼핑몰"
-                    value={product}
-                    onChange={(e) => setProduct(e.target.value)}
-                  />
-                </FormControl>
-
-                {/* Prompt Input */}
-                <FormControl>
-                  <FormLabel>홍보 내용 및 특징</FormLabel>
-                  <Textarea
-                    placeholder="상품의 특징, 장점, 할인 정보 등을 자세히 입력해주세요..."
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    rows={4}
-                  />
-                </FormControl>
-
-                {/* Tone Selection */}
-                <FormControl>
-                  <FormLabel>톤앤매너</FormLabel>
-                  <Select value={tone} onChange={(e) => setTone(e.target.value)}>
-                    {toneOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
+                  <FormLabel>콘텐츠 타입</FormLabel>
+                  <Select
+                    value={contentType}
+                    onChange={(e) => setContentType(e.target.value)}
+                  >
+                    <option value="blog">블로그 포스트</option>
+                    <option value="instagram">인스타그램</option>
+                    <option value="youtube">유튜브</option>
+                    <option value="flyer">플라이어</option>
                   </Select>
                 </FormControl>
 
-                <Button
-                  leftIcon={<FaRobot />}
-                  colorScheme="blue"
-                  size="lg"
-                  onClick={handleGenerate}
-                  isLoading={isGenerating}
-                  loadingText="AI가 콘텐츠를 생성 중..."
+                <FormControl>
+                  <FormLabel>톤앤매너</FormLabel>
+                  <Select
+                    value={tone}
+                    onChange={(e) => setTone(e.target.value)}
+                  >
+                    <option value="친근한">친근한</option>
+                    <option value="전문적인">전문적인</option>
+                    <option value="캐주얼한">캐주얼한</option>
+                    <option value="공식적인">공식적인</option>
+                  </Select>
+                </FormControl>
+              </HStack>
+
+              <Button
+                colorScheme="blue"
+                onClick={handleGenerate}
+                isLoading={isLoading}
+                loadingText="생성 중..."
+                size="lg"
+              >
+                콘텐츠 생성
+              </Button>
+
+              {response && (
+                <Box
+                  p={4}
+                  border="1px"
+                  borderColor="gray.200"
+                  borderRadius="md"
+                  bg="gray.50"
                 >
-                  콘텐츠 생성하기
-                </Button>
-              </VStack>
-            </CardBody>
-          </Card>
-        </GridItem>
-
-        <GridItem>
-          {isGenerating ? (
-            <Card>
-              <CardBody textAlign="center" py={20}>
-                <VStack spacing={4}>
-                  <Spinner size="xl" color="blue.500" />
-                  <Text>AI가 최적의 콘텐츠를 생성하고 있습니다...</Text>
-                  <Text fontSize="sm" color="gray.600">
-                    잠시만 기다려주세요. 보통 10-30초 정도 소요됩니다.
+                  <Text fontWeight="bold" mb={2}>
+                    생성된 콘텐츠:
                   </Text>
-                </VStack>
-              </CardBody>
-            </Card>
-          ) : generatedContent ? (
-            <Card>
-              <CardHeader>
-                <HStack justify="space-between">
-                  <Text fontSize="lg" fontWeight="bold">생성된 콘텐츠</Text>
-                  <HStack>
-                    <IconButton
-                      aria-label="Refresh"
-                      icon={<FaSync />}
-                      size="sm"
-                      onClick={handleGenerate}
-                    />
-                    <IconButton
-                      aria-label="Copy"
-                      icon={<FaCopy />}
-                      size="sm"
-                      onClick={() => handleCopy(generatedContent.content)}
-                    />
-                  </HStack>
-                </HStack>
-              </CardHeader>
-              <CardBody>
-                <VStack spacing={4} align="stretch">
-                  <Box>
-                    <Text fontWeight="bold" mb={2}>제목</Text>
-                    <Text bg="gray.50" p={3} borderRadius="md">
-                      {generatedContent.title}
-                    </Text>
-                  </Box>
+                  <Text whiteSpace="pre-wrap">{response}</Text>
+                </Box>
+              )}
+            </VStack>
+          </TabPanel>
+          {/* 이미지 생성 탭 */}
+          <TabPanel>
+            <VStack spacing={4} align="stretch">
+              <Box mb={4}>
+                <Heading size="md" mb={3}>AI 이미지 생성기</Heading>
+                <Text fontSize="sm" color="gray.600">
+                  원하는 이미지에 대한 설명을 입력하면 AI가 해당 이미지를 생성합니다.
+                  구체적인 설명일수록 더 좋은 결과를 얻을 수 있습니다.
+                </Text>
+              </Box>
 
-                  <Box>
-                    <Text fontWeight="bold" mb={2}>내용</Text>
-                    <Textarea
-                      value={generatedContent.content}
-                      readOnly
-                      rows={8}
-                      bg="gray.50"
-                    />
-                  </Box>
+              <FormControl>
+                <FormLabel>이미지 스타일</FormLabel>
+                <Select
+                  value={imageStyle}
+                  onChange={(e) => setImageStyle(e.target.value)}
+                >
+                  <option value="professional">전문적인</option>
+                  <option value="casual">캐주얼</option>
+                  <option value="modern">모던</option>
+                  <option value="vintage">빈티지</option>
+                  <option value="minimalist">미니멀</option>
+                </Select>
+              </FormControl>
 
-                  <Box>
-                    <Text fontWeight="bold" mb={2}>해시태그</Text>
-                    <HStack wrap="wrap">
-                      {generatedContent.hashtags.map((tag, index) => (
-                        <Badge 
-                          key={index} 
-                          colorScheme="blue" 
-                          cursor="pointer" 
-                          onClick={() => handleCopy(`#${tag}`)}
-                        >
-                          #{tag}
-                        </Badge>
-                      ))}
-                    </HStack>
-                  </Box>
-                </VStack>
-              </CardBody>
-            </Card>
-          ) : (
-            <Card>
-              <CardBody textAlign="center" py={20}>
-                <VStack spacing={4}>
-                  <Box as={FaRobot} size="48px" color="gray.400" />
-                  <Text color="gray.600">
-                    왼쪽에서 설정을 완료하고 "콘텐츠 생성하기" 버튼을 눌러주세요.
+              <FormControl>
+                <FormLabel>이미지 프롬프트</FormLabel>
+                <Textarea
+                  value={imagePrompt}
+                  onChange={(e) => setImagePrompt(e.target.value)}
+                  placeholder="생성하고 싶은 이미지를 설명하세요... 예: 따뜻한 조명의 아늑한 카페 인테리어"
+                  rows={4}
+                />
+              </FormControl>
+
+              <Button
+                colorScheme="green"
+                onClick={handleImageGenerate}
+                isLoading={isImageLoading}
+                loadingText="이미지 생성 중..."
+                size="lg"
+              >
+                이미지 생성
+              </Button>
+
+              {generatedImage && generatedImage.success && (
+                <Box
+                  p={4}
+                  border="1px"
+                  borderColor="gray.200"
+                  borderRadius="md"
+                  bg="gray.50"
+                >
+                  <Text fontWeight="bold" mb={4}>
+                    생성된 이미지:
                   </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    AI가 귀하의 비즈니스에 최적화된 마케팅 콘텐츠를 생성해드립니다.
+                  <Image
+                    src={`http://127.0.0.1:8001${generatedImage.image_url}`}
+                    alt="Generated marketing image"
+                    maxW="100%"
+                    borderRadius="md"
+                    boxShadow="md"
+                  />
+                  <Text fontSize="sm" color="gray.600" mt={2}>
+                    파일명: {generatedImage.filename}
                   </Text>
-                </VStack>
-              </CardBody>
-            </Card>
-          )}
-        </GridItem>
-      </Grid>
+                  <Text fontSize="sm" color="gray.500" mt={1}>
+                    생성 시간:{" "}
+                    {new Date(generatedImage.created_at).toLocaleString()}
+                  </Text>
+                </Box>
+              )}
+            </VStack>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </Box>
-  )
-}
+  );
+};
 
-export default ContentGeneratorPage
+export default ContentGeneratorPage;

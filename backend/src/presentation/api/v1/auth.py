@@ -1,118 +1,738 @@
 """
 인증 관련 API 엔드포인트
 """
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import HTTPBearer
-from pydantic import BaseModel
-from typing import Optional
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
+from sqlalchemy.orm import Session
+from typing import Union, Dict, Any
+import secrets
+from datetime import datetime, timedelta
+from pydantic import BaseModel, ValidationError
+import uuid
+import logging
+import json
+import httpx
 
-from config.settings import settings
+from src.domain.schemas.auth import (
+    PersonalUserRegister,
+    BusinessUserRegister,
+    LoginRequest,
+    Token,
+    UserResponse,
+    EmailVerificationRequest,
+    EmailVerificationResponse
+)
+from src.domain.entities.user import User, BusinessProfile, EmailVerification, PasswordReset
+from src.domain.entities.user_type import UserType
+from src.config.database import get_db
+from src.infrastructure.security.password import get_password_hash, verify_password
+from src.infrastructure.security.jwt import create_access_token
+from src.infrastructure.email import send_verification_email, send_password_reset_email
+from src.config.settings import settings
 
 router = APIRouter()
-security = HTTPBearer()
+logger = logging.getLogger(__name__)
 
+def format_error_response(error: Any) -> Dict[str, Any]:
+    """에러 응답 형식 변환"""
+    if isinstance(error, ValidationError):
+        return {
+            "status": "error",
+            "message": "입력 데이터가 올바르지 않습니다.",
+            "errors": [{"field": err["loc"][0], "message": err["msg"]} for err in error.errors()]
+        }
+    elif isinstance(error, HTTPException):
+        return {
+            "status": "error",
+            "message": error.detail
+        }
+    else:
+        return {
+            "status": "error",
+            "message": str(error)
+        }
 
-class LoginRequest(BaseModel):
+# 이메일 인증 요청 모델
+class EmailRequest(BaseModel):
     email: str
-    password: str
 
 
-class SignupRequest(BaseModel):
-    email: str
-    username: str
-    password: str
+@router.post("/register/personal", response_model=Token)
+async def register_personal(
+    request: Request,
+    user_data: PersonalUserRegister,
+    db: Session = Depends(get_db)
+):
+    """개인 사용자 회원가입"""
+    try:
+        # 요청 데이터 로깅
+        body = await request.body()
+        logger.info(f"Raw request body: {body.decode()}")
+        logger.info(f"Parsed user data: {user_data.dict()}")
+        
+        # 중복 ID 체크
+        if db.query(User).filter(User.id == user_data.user_id).first():
+            logger.warning(f"중복된 ID: {user_data.user_id}")
+            raise HTTPException(
+                status_code=400,
+                detail="이미 사용 중인 ID입니다."
+            )
+        
+        # 중복 이메일 체크
+        if db.query(User).filter(User.email == user_data.email).first():
+            logger.warning(f"중복된 이메일: {user_data.email}")
+            raise HTTPException(
+                status_code=400,
+                detail="이미 사용 중인 이메일입니다."
+            )
+        
+        # 새 사용자 생성
+        hashed_password = get_password_hash(user_data.password)
+        new_user = User(
+            id=user_data.user_id,
+            email=user_data.email,
+            username=user_data.username,
+            hashed_password=hashed_password,
+            phone=user_data.phone,
+            user_type=UserType.PERSONAL
+        )
+        
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        
+        # 액세스 토큰 생성
+        access_token = create_access_token(
+            data={"sub": new_user.id, "user_type": new_user.user_type.value}
+        )
+        
+        logger.info(f"회원가입 성공: {new_user.id}")
+        
+        return Token(
+            access_token=access_token,
+            token_type="bearer",
+            user_id=new_user.id,
+            user_type=new_user.user_type
+        )
+        
+    except ValidationError as e:
+        logger.error(f"유효성 검사 오류: {str(e)}")
+        logger.error(f"Validation errors: {e.errors()}")
+        return {
+            "status": "error",
+            "message": "입력 데이터가 올바르지 않습니다.",
+            "errors": [{"field": err["loc"][0], "message": err["msg"]} for err in e.errors()]
+        }
+    except HTTPException as e:
+        logger.error(f"HTTP 예외: {str(e)}")
+        return {
+            "status": "error",
+            "message": e.detail
+        }
+    except Exception as e:
+        logger.error(f"회원가입 중 오류 발생: {str(e)}")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 
-class SocialLoginRequest(BaseModel):
-    provider: str  # 'google', 'naver', 'kakao'
-    token: str
+@router.post("/register/business", response_model=Token)
+async def register_business(
+    user_data: BusinessUserRegister,
+    db: Session = Depends(get_db)
+):
+    """사업자 회원가입"""
+    try:
+        logger.info(f"사업자 회원가입 요청 데이터: {user_data.dict()}")
+        
+        # 중복 ID 체크
+        if db.query(User).filter(User.id == user_data.id).first():
+            logger.warning(f"중복된 ID: {user_data.id}")
+            raise HTTPException(
+                status_code=400,
+                detail="이미 사용 중인 ID입니다."
+            )
+        
+        # 중복 이메일 체크
+        if db.query(User).filter(User.email == user_data.email).first():
+            logger.warning(f"중복된 이메일: {user_data.email}")
+            raise HTTPException(
+                status_code=400,
+                detail="이미 사용 중인 이메일입니다."
+            )
+        
+        # 새 사용자 생성
+        hashed_password = get_password_hash(user_data.password)
+        new_user = User(
+            id=user_data.id,
+            email=user_data.email,
+            username=user_data.username,
+            hashed_password=hashed_password,
+            phone=user_data.phone,
+            user_type=UserType.BUSINESS
+        )
+        
+        db.add(new_user)
+        db.flush()  # ID를 얻기 위해 flush
+        
+        # 사업자 프로필 생성
+        business_profile = BusinessProfile(
+            users_id=new_user.id,
+            business_name=user_data.business_profile.business_name,
+            business_registration_number=user_data.business_profile.business_registration_number,
+            business_type=user_data.business_profile.business_type,
+            business_category=user_data.business_profile.business_category,
+            address=user_data.business_profile.address,
+            representative_name=user_data.business_profile.representative_name
+        )
+        
+        db.add(business_profile)
+        db.commit()
+        db.refresh(new_user)
+        
+        # 액세스 토큰 생성
+        access_token = create_access_token(
+            data={"sub": new_user.id, "user_type": new_user.user_type.value}
+        )
+        
+        logger.info(f"사업자 회원가입 성공: {new_user.id}")
+        
+        return Token(
+            access_token=access_token,
+            token_type="bearer",
+            user_id=new_user.id,
+            user_type=new_user.user_type
+        )
+        
+    except ValidationError as e:
+        logger.error(f"유효성 검사 오류: {str(e)}")
+        return format_error_response(e)
+    except HTTPException as e:
+        logger.error(f"HTTP 예외: {str(e)}")
+        return format_error_response(e)
+    except Exception as e:
+        logger.error(f"사업자 회원가입 중 오류 발생: {str(e)}")
+        return format_error_response(e)
 
 
-class AuthResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    user_id: str
-    username: str
-
-
-@router.post("/signup", response_model=AuthResponse)
-async def signup(request: SignupRequest):
-    """회원가입"""
-    # TODO: 실제 구현 필요
-    return {
-        "access_token": "fake-jwt-token",
-        "user_id": "user-123",
-        "username": request.username
-    }
-
-
-@router.post("/login", response_model=AuthResponse)
-async def login(request: LoginRequest):
+@router.post("/login", response_model=Token)
+async def login(
+    login_data: LoginRequest,
+    db: Session = Depends(get_db)
+):
     """로그인"""
-    # TODO: 실제 구현 필요
-    return {
-        "access_token": "fake-jwt-token",
-        "user_id": "user-123",
-        "username": "testuser"
-    }
+    try:
+        logger.info(f"로그인 시도: {login_data.user_id}")
+        
+        user = db.query(User).filter(User.id == login_data.user_id).first()
+        if not user or not verify_password(login_data.password, user.hashed_password):
+            logger.warning(f"로그인 실패: {login_data.user_id}")
+            raise HTTPException(
+                status_code=401,
+                detail="아이디 또는 비밀번호가 올바르지 않습니다."
+            )
+        
+        access_token = create_access_token(
+            data={"sub": user.id, "user_type": user.user_type.value}
+        )
+        
+        logger.info(f"로그인 성공: {user.id}")
+        
+        return Token(
+            access_token=access_token,
+            token_type="bearer",
+            user_id=user.id,
+            email=user.email,
+            username=user.username,
+            user_type=user.user_type
+        )
+        
+    except ValidationError as e:
+        logger.error(f"유효성 검사 오류: {str(e)}")
+        return format_error_response(e)
+    except HTTPException as e:
+        logger.error(f"HTTP 예외: {str(e)}")
+        return format_error_response(e)
+    except Exception as e:
+        logger.error(f"로그인 중 오류 발생: {str(e)}")
+        return format_error_response(e)
 
 
-@router.post("/social-login", response_model=AuthResponse)
-async def social_login(request: SocialLoginRequest):
-    """소셜 로그인"""
-    
-    # API 키 설정 확인
-    config_status = settings.is_social_login_configured
-    
-    if request.provider == "google" and not config_status["google"]:
+@router.post("/send-verification-email", response_model=EmailVerificationResponse)
+async def send_verification_email_endpoint(
+    request: EmailRequest,
+    db: Session = Depends(get_db)
+):
+    """이메일 인증 메일 발송"""
+    # 이메일 중복 체크
+    if db.query(User).filter(User.email == request.email).first():
         raise HTTPException(
-            status_code=501,
-            detail="Google 로그인 API 키가 설정되지 않았습니다. 관리자에게 문의하세요."
+            status_code=400,
+            detail="이미 사용 중인 이메일입니다."
         )
     
-    if request.provider == "naver" and not config_status["naver"]:
+    # 인증 코드 생성
+    verification_code = str(uuid.uuid4())[:6]
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
+    
+    # 기존 인증 정보 삭제
+    db.query(EmailVerification).filter(EmailVerification.email == request.email).delete()
+    
+    # 새로운 인증 정보 저장
+    verification = EmailVerification(
+        id=str(uuid.uuid4()),  # UUID 생성
+        email=request.email,
+        code=verification_code,
+        expires_at=expires_at
+    )
+    db.add(verification)
+    db.commit()
+    
+    # 이메일 전송
+    try:
+        await send_verification_email(request.email, verification_code)
+    except Exception as e:
         raise HTTPException(
-            status_code=501,
-            detail="네이버 로그인 API 키가 설정되지 않았습니다. 관리자에게 문의하세요."
+            status_code=500,
+            detail="이메일 전송에 실패했습니다."
         )
     
-    if request.provider == "kakao" and not config_status["kakao"]:
+    return EmailVerificationResponse(
+        message="인증 이메일이 전송되었습니다.",
+        expires_at=expires_at
+    )
+
+
+@router.post("/verify-email", response_model=dict)
+async def verify_email(
+    verification_data: EmailVerificationRequest,
+    db: Session = Depends(get_db)
+):
+    """이메일 인증 코드 확인"""
+    verification = db.query(EmailVerification).filter(
+        EmailVerification.email == verification_data.email,
+        EmailVerification.code == verification_data.code,
+        EmailVerification.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not verification:
         raise HTTPException(
-            status_code=501,
-            detail="카카오 로그인 API 키가 설정되지 않았습니다. 관리자에게 문의하세요."
+            status_code=400,
+            detail="잘못된 인증 코드입니다."
         )
     
-    # TODO: 실제 소셜 로그인 구현 필요
-    return {
-        "access_token": "fake-social-jwt-token",
-        "user_id": f"social-user-{request.provider}",
-        "username": f"{request.provider}_user"
-    }
+    # 인증 완료 처리
+    verification.verified = True
+    verification.verified_at = datetime.utcnow()
+    db.commit()
+    
+    return {"message": "이메일 인증이 완료되었습니다."}
 
 
-@router.post("/logout")
-async def logout():
-    """로그아웃"""
-    return {"message": "Successfully logged out"}
+@router.post("/forgot-password")
+async def forgot_password(
+    email: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """비밀번호 재설정 이메일 발송"""
+    try:
+        logger.info(f"비밀번호 재설정 요청: {email}")
+        
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            # 보안을 위해 사용자가 존재하지 않아도 성공 응답
+            return {"status": "success", "message": "If the email exists, a password reset link will be sent"}
+        
+        # 재설정 토큰 생성
+        reset_token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(hours=1)
+        
+        # 기존 토큰 삭제
+        db.query(PasswordReset).filter(PasswordReset.user_id == user.id).delete()
+        
+        # 새로운 토큰 저장
+        reset = PasswordReset(
+            user_id=user.id,
+            token=reset_token,
+            expires_at=expires_at
+        )
+        db.add(reset)
+        db.commit()
+        
+        # 이메일 발송 (백그라운드 작업)
+        background_tasks.add_task(send_password_reset_email, email, reset_token)
+        
+        logger.info(f"비밀번호 재설정 이메일 발송 성공: {email}")
+        
+        return {"status": "success", "message": "If the email exists, a password reset link will be sent"}
+        
+    except Exception as e:
+        logger.error(f"비밀번호 재설정 이메일 발송 중 오류 발생: {str(e)}")
+        return format_error_response(e)
 
 
-@router.post("/refresh")
-async def refresh_token():
-    """토큰 갱신"""
-    # TODO: 실제 구현 필요
-    return {
-        "access_token": "refreshed-jwt-token",
-        "token_type": "bearer"
-    }
+@router.post("/reset-password")
+async def reset_password(
+    token: str,
+    new_password: str,
+    db: Session = Depends(get_db)
+):
+    """비밀번호 재설정"""
+    try:
+        logger.info(f"비밀번호 재설정 시도: {token}")
+        
+        reset = db.query(PasswordReset).filter(
+            PasswordReset.token == token,
+            PasswordReset.expires_at > datetime.utcnow(),
+            PasswordReset.used == False
+        ).first()
+        
+        if not reset:
+            logger.warning(f"유효하지 않은 재설정 토큰: {token}")
+            raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+        
+        # 비밀번호 업데이트
+        user = db.query(User).filter(User.id == reset.user_id).first()
+        user.hashed_password = get_password_hash(new_password)
+        
+        # 토큰 사용 처리
+        reset.used = True
+        reset.used_at = datetime.utcnow()
+        
+        db.commit()
+        
+        logger.info(f"비밀번호 재설정 성공: {user.id}")
+        
+        return {"status": "success", "message": "Password has been reset successfully"}
+        
+    except ValidationError as e:
+        logger.error(f"유효성 검사 오류: {str(e)}")
+        return format_error_response(e)
+    except HTTPException as e:
+        logger.error(f"HTTP 예외: {str(e)}")
+        return format_error_response(e)
+    except Exception as e:
+        logger.error(f"비밀번호 재설정 중 오류 발생: {str(e)}")
+        return format_error_response(e)
 
 
-@router.get("/me")
-async def get_current_user():
-    """현재 사용자 정보 조회"""
-    # TODO: 실제 구현 필요 (JWT 토큰 검증)
-    return {
-        "user_id": "user-123",
-        "username": "testuser",
-        "email": "test@example.com",
-        "is_active": True
-    }
+@router.get("/social/naver/url")
+async def get_naver_login_url():
+    """네이버 로그인 URL 가져오기"""
+    try:
+        if not settings.naver_client_id or not settings.naver_client_secret:
+            raise HTTPException(
+                status_code=500,
+                detail="네이버 API 설정이 완료되지 않았습니다."
+            )
+        
+        # 네이버 로그인 URL 생성
+        frontend_callback_url = "http://localhost:3000/auth/callback/naver"  # 프론트엔드의 콜백 URL
+        state = secrets.token_urlsafe(16)  # CSRF 방지를 위한 상태 토큰
+        
+        authorize_url = f"https://nid.naver.com/oauth2.0/authorize"
+        params = {
+            "response_type": "code",
+            "client_id": settings.naver_client_id,
+            "redirect_uri": frontend_callback_url,
+            "state": state
+        }
+        
+        url = f"{authorize_url}?response_type=code&client_id={settings.naver_client_id}&redirect_uri={frontend_callback_url}&state={state}"
+        return {"url": url, "state": state}
+        
+    except Exception as e:
+        logger.error(f"네이버 로그인 URL 생성 중 오류: {str(e)}")
+        return format_error_response(e)
+
+from fastapi import Body
+
+@router.post("/social/naver/callback")
+async def naver_login_callback(
+    code: str = Body(...),
+    state: str = Body(...),
+    db: Session = Depends(get_db)
+):
+    """네이버 로그인 콜백 처리"""
+    logger.info(f"네이버 로그인 콜백 - code: {code}, state: {state}")
+    try:
+        # 액세스 토큰 요청
+        token_url = "https://nid.naver.com/oauth2.0/token"
+        frontend_callback_url = "http://localhost:3000/auth/callback/naver"
+        
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(token_url, data={
+                "grant_type": "authorization_code",
+                "client_id": settings.naver_client_id,
+                "client_secret": settings.naver_client_secret,
+                "code": code,
+                "state": state,
+                "redirect_uri": frontend_callback_url
+            })
+            
+            token_data = token_response.json()
+            if "error" in token_data:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"네이버 토큰 획득 실패: {token_data['error']}"
+                )
+            
+            # 사용자 정보 요청
+            user_info_response = await client.get(
+                "https://openapi.naver.com/v1/nid/me",
+                headers={"Authorization": f"Bearer {token_data['access_token']}"}
+            )
+            
+            user_info = user_info_response.json()
+            if user_info.get("resultcode") != "00":
+                raise HTTPException(
+                    status_code=400,
+                    detail="네이버 사용자 정보 획득 실패"
+                )
+                
+            naver_account = user_info["response"]
+            
+            # 기존 사용자 확인 또는 새 사용자 생성
+            user = db.query(User).filter(User.email == naver_account["email"]).first()
+            if not user:
+                user = User(
+                    id=str(uuid.uuid4()),
+                    email=naver_account["email"],
+                    username=naver_account["nickname"],
+                    user_type=UserType.PERSONAL,
+                    social_provider="naver",
+                    social_id=naver_account["id"]
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            
+            # 액세스 토큰 생성
+            access_token = create_access_token(
+                data={"sub": user.id, "user_type": user.user_type.value}
+            )
+            
+            return Token(
+                access_token=access_token,
+                token_type="bearer",
+                user_id=user.id,
+                user_type=user.user_type
+            )
+            
+    except Exception as e:
+        logger.error(f"네이버 로그인 콜백 처리 중 오류: {str(e)}")
+        return format_error_response(e)
+
+
+@router.get("/social/kakao/url")
+async def get_kakao_login_url():
+    """카카오 로그인 URL 가져오기"""
+    try:
+        if not settings.kakao_client_id:
+            raise HTTPException(
+                status_code=500,
+                detail="카카오 API 설정이 완료되지 않았습니다."
+            )
+        
+        # 카카오 로그인 URL 생성
+        frontend_callback_url = "http://localhost:3000/auth/callback/kakao"  # 프론트엔드의 콜백 URL
+        state = secrets.token_urlsafe(16)  # CSRF 방지를 위한 상태 토큰
+        
+        authorize_url = "https://kauth.kakao.com/oauth/authorize"
+        
+        from urllib.parse import urlencode
+        params = {
+            "response_type": "code",
+            "client_id": settings.kakao_client_id,
+            "redirect_uri": frontend_callback_url,
+            "state": state
+        }
+        
+        url = f"{authorize_url}?{urlencode(params)}"
+        return {"url": url, "state": state}
+        
+    except Exception as e:
+        logger.error(f"카카오 로그인 URL 생성 중 오류: {str(e)}")
+        return format_error_response(e)
+
+@router.post("/social/kakao/callback")
+async def kakao_login_callback(
+    code: str = Body(...),
+    state: str = Body(...),
+    db: Session = Depends(get_db)
+):
+    """카카오 로그인 콜백 처리"""
+    logger.info(f"카카오 로그인 콜백 - code: {code}, state: {state}")
+    try:
+        # 액세스 토큰 요청
+        token_url = "https://kauth.kakao.com/oauth/token"
+        frontend_callback_url = "http://localhost:3000/auth/callback/kakao"
+        
+        async with httpx.AsyncClient() as client:
+            # 토큰 요청
+            token_data = {
+                "grant_type": "authorization_code",
+                "client_id": settings.kakao_client_id,
+                "client_secret": settings.kakao_client_secret,
+                "redirect_uri": frontend_callback_url,
+                "code": code
+            }
+            
+            token_response = await client.post(
+                token_url,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data=token_data
+            )
+            
+            token_info = token_response.json()
+            if "error" in token_info:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"카카오 토큰 획득 실패: {token_info['error']}"
+                )
+            
+            # 사용자 정보 요청
+            user_info_response = await client.get(
+                "https://kapi.kakao.com/v2/user/me",
+                headers={
+                    "Authorization": f"Bearer {token_info['access_token']}",
+                    "Content-type": "application/x-www-form-urlencoded;charset=utf-8"
+                }
+            )
+            
+            user_info = user_info_response.json()
+            if "id" not in user_info:
+                raise HTTPException(
+                    status_code=400,
+                    detail="카카오 사용자 정보 획득 실패"
+                )
+            
+            kakao_account = user_info.get("kakao_account", {})
+            
+            # 기존 사용자 확인 또는 새 사용자 생성
+            email = kakao_account.get("email")
+            if not email:
+                raise HTTPException(
+                    status_code=400,
+                    detail="이메일 정보를 가져올 수 없습니다. 카카오 계정 이메일 제공 권한을 확인해주세요."
+                )
+                
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                user = User(
+                    id=str(uuid.uuid4()),
+                    email=email,
+                    username=kakao_account.get("profile", {}).get("nickname", f"카카오사용자_{user_info['id']}"),
+                    user_type=UserType.PERSONAL,
+                    social_provider="kakao",
+                    social_id=str(user_info["id"])
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+            
+            # 액세스 토큰 생성
+            access_token = create_access_token(
+                data={"sub": user.id, "user_type": user.user_type.value}
+            )
+            
+            return Token(
+                access_token=access_token,
+                token_type="bearer",
+                user_id=user.id,
+                user_type=user.user_type
+            )
+            
+    except Exception as e:
+        logger.error(f"카카오 로그인 콜백 처리 중 오류: {str(e)}")
+        return format_error_response(e)
+
+
+@router.get("/social/google/url")
+async def google_login_url():
+    """구글 로그인 URL 생성"""
+    state = secrets.token_urlsafe(32)
+    scope = "openid email profile"
+    redirect_uri = f"{settings.BASE_URL}/auth/callback/google"
+    google_auth_url = (
+        "https://accounts.google.com/o/oauth2/v2/auth"
+        f"?client_id={settings.google_client_id}"
+        f"&redirect_uri={redirect_uri}"
+        f"&response_type=code"
+        f"&scope={scope}"
+        f"&state={state}"
+    )
+    return {"url": google_auth_url}
+
+@router.post("/social/google/callback")
+async def google_login_callback(
+    code: str = Body(...),
+    state: str = Body(...),
+    db: Session = Depends(get_db)
+):
+    """구글 로그인 콜백 처리"""    
+    try:
+        # 액세스 토큰 얻기
+        redirect_uri = f"{settings.BASE_URL}/auth/callback/google"
+        token_url = "https://oauth2.googleapis.com/token"
+        token_data = {
+            "code": code,
+            "client_id": settings.google_client_id,
+            "client_secret": settings.google_client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        }
+
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(token_url, data=token_data)
+            token_response.raise_for_status()
+            token_info = token_response.json()
+
+            # 사용자 정보 가져오기
+            headers = {"Authorization": f"Bearer {token_info['access_token']}"}
+            user_info_response = await client.get(
+                "https://www.googleapis.com/oauth2/v2/userinfo",
+                headers=headers
+            )
+            user_info = user_info_response.json()
+
+            # 사용자 조회 또는 생성
+            email = user_info.get("email")
+            if not email:
+                raise HTTPException(status_code=400, detail="이메일 정보를 가져올 수 없습니다.")
+
+            user = db.query(User).filter(User.email == email).first()
+            if not user:                  
+                user = User(
+                    id=str(uuid.uuid4()),
+                    email=email,
+                    username=user_info.get("name", f"구글사용자_{user_info['id']}"),
+                    user_type=UserType.PERSONAL,
+                    social_provider="google",
+                    social_id=str(user_info["id"])
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+
+            # 액세스 토큰 생성
+            access_token = create_access_token(
+                data={"sub": user.id, "user_type": user.user_type.value}
+            )
+            
+            return Token(
+                access_token=access_token,
+                token_type="bearer",
+                user_id=user.id,
+                email=user.email,
+                username=user.username,
+                user_type=user.user_type
+            )
+
+    except httpx.RequestError as e:
+        logger.error(f"Google OAuth error: {str(e)}")
+        raise HTTPException(status_code=500, detail="구글 로그인 처리 중 오류가 발생했습니다.")
+    except Exception as e:
+        logger.error(f"Unexpected error in google callback: {str(e)}")
+        raise HTTPException(status_code=500, detail="알 수 없는 오류가 발생했습니다.")

@@ -1,78 +1,77 @@
+#!/usr/bin/env python3
 """
-FastAPI 메인 애플리케이션
+Main FastAPI application module following Clean Architecture principles.
 """
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+import os
+import logging
 
-from config.settings import settings
-from presentation.api.v1 import auth, business, content, analysis
-from infrastructure.ai.ollama_service import OllamaService
-
+# API 라우터 임포트
+from src.presentation.api.v1.auth import router as auth_router
+from src.presentation.api.v1.business import router as business_router
+from src.presentation.api.v1.content import router as content_router
+from src.presentation.api.v1.analysis import router as analysis_router
+from src.presentation.api.v1.population import router as population_router
+from src.presentation.api.image_router import router as image_router
+# 테스트 라우터는 개발 환경에서만 필요할 경우 조건부로 임포트
+# from src.presentation.api.v1.test import router as test_router
 
 def create_app() -> FastAPI:
-    """FastAPI 애플리케이션 생성"""
+    """
+    Factory function that creates and configures the FastAPI application.
     
+    Returns:
+        FastAPI: Configured FastAPI application instance
+    """
     app = FastAPI(
-        title=settings.app_name,
-        description="소상공인을 위한 AI 마케팅 플랫폼 API",
-        version="1.0.0",
-        debug=settings.debug
+        title="Marketing Platform API",
+        description="Marketing Platform backend API service",
+        version="0.1.0"
     )
     
-    # CORS 미들웨어 설정
+    # Configure CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=[
+            "http://localhost:3000", 
+            "http://127.0.0.1:3000",
+            "http://localhost:3001",
+            "https://localhost:3000",
+            "https://127.0.0.1:3000",
+            "*"  # 개발 환경에서는 모든 origin을 허용할 수 있지만, 프로덕션에서는 제거해야 함
+        ],  # 프론트엔드 URL 명시적 지정
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+        expose_headers=["Content-Length", "Content-Type"],
     )
     
-    # API 라우터 등록
-    app.include_router(auth.router, prefix="/api/v1/auth", tags=["인증"])
-    app.include_router(business.router, prefix="/api/v1/business", tags=["비즈니스"])
-    app.include_router(content.router, prefix="/api/v1/content", tags=["콘텐츠"])
-    app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["분석"])
+    # 정적 파일 서빙 (이미지 등)
+    static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static")
+    os.makedirs(os.path.join(static_dir, "images"), exist_ok=True)
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
     
-    # 글로벌 예외 처리
-    @app.exception_handler(Exception)
-    async def global_exception_handler(request: Request, exc: Exception):
-        return JSONResponse(
-            status_code=500,
-            content={
-                "detail": "Internal server error" if not settings.debug else str(exc),
-                "type": "error"
-            }
-        )
+    @app.get("/")
+    async def root():
+        return {"message": "Marketing Platform API is running"}
     
-    # 헬스 체크 엔드포인트
     @app.get("/health")
     async def health_check():
-        """서버 상태 확인"""
-        try:
-            # Ollama 연결 확인
-            ollama_service = OllamaService(settings.ollama_base_url)
-            models = await ollama_service.get_available_models()
-            await ollama_service.close()
-            
-            return {
-                "status": "healthy",
-                "version": "1.0.0",
-                "ollama_models": models,
-                "social_login_config": settings.is_social_login_configured
-            }
-        except Exception as e:
-            return JSONResponse(
-                status_code=503,
-                content={
-                    "status": "unhealthy",
-                    "error": str(e) if settings.debug else "Service unavailable"
-                }
-            )
+        return {"status": "healthy"}
+    
+    # API 라우터 등록
+    app.include_router(auth_router, prefix="/api/v1/auth", tags=["인증"])
+    app.include_router(business_router, prefix="/api/v1", tags=["비즈니스"])
+    app.include_router(content_router, prefix="/api/v1/content", tags=["콘텐츠"])
+    app.include_router(analysis_router, prefix="/api/v1/analysis", tags=["분석"])
+    app.include_router(population_router, prefix="/api/v1/population", tags=["인구통계"])
+    app.include_router(image_router)  # image_router는 이미 prefix가 설정되어 있음
+    # 테스트 라우터는 개발 환경에서만 필요할 경우 조건부로 등록
+    # app.include_router(test_router, prefix="/api/v1/test", tags=["테스트"])
     
     return app
 
-
-# 애플리케이션 인스턴스
+# For compatibility with direct imports (like in start_server.py)
 app = create_app()

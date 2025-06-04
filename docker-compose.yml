@@ -1,0 +1,172 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:15-alpine
+    container_name: marketing_platform_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-marketing_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d/
+    ports:
+      - "5432:5432"
+    networks:
+      - marketing_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-marketing_platform}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 캐시
+  redis:
+    image: redis:7-alpine
+    container_name: marketing_platform_cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - marketing_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 백엔드 API 서버
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: marketing_platform_api
+    restart: unless-stopped
+    environment:
+      # 데이터베이스 설정
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres123}@postgres:5432/${POSTGRES_DB:-marketing_platform}
+      
+      # Redis 설정
+      REDIS_URL: redis://redis:6379/0
+      
+      # API 키 설정
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      
+      # 서버 설정
+      DEBUG: ${DEBUG:-false}
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-here}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:80}
+      
+      # 업로드 설정
+      UPLOAD_DIR: /app/static/images
+      MAX_UPLOAD_SIZE: 10485760  # 10MB
+    volumes:
+      - ./backend/static:/app/static
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - marketing_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 프론트엔드 웹 서버
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: marketing_platform_web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - marketing_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL MCP Server
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    container_name: marketing_platform_mcp
+    restart: unless-stopped
+    environment:
+      # 데이터베이스 연결 설정
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-marketing_platform}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      DB_SSL: false
+      
+      # MCP 서버 설정
+      MCP_SERVER_HOST: 0.0.0.0
+      MCP_SERVER_PORT: 3001
+      
+      # 연결 풀 설정
+      MAX_CONNECTIONS: 10
+      CONNECTION_TIMEOUT: 5000
+      
+      # 로그 설정
+      LOG_LEVEL: ${MCP_LOG_LEVEL:-info}
+      DEBUG: ${MCP_DEBUG:-false}
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - marketing_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "import('./dist/index.js').then(m => new m.default().healthCheck()).then(() => process.exit(0)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 데이터베이스 관리 도구 (개발용)
+  adminer:
+    image: adminer:latest
+    container_name: marketing_platform_adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - marketing_network
+    profiles:
+      - dev  # 개발 환경에서만 실행
+
+# 네트워크 설정
+networks:
+  marketing_network:
+    driver: bridge
+    name: marketing_platform_network
+
+# 볼륨 설정
+volumes:
+  postgres_data:
+    name: marketing_platform_postgres_data
+  redis_data:
+    name: marketing_platform_redis_data

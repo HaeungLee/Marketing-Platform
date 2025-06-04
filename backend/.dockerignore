@@ -1,0 +1,64 @@
+# Git
+.git
+.gitignore
+.gitattributes
+README.md
+DOCKER_GUIDE.md
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# 환경변수
+.env
+.env.*
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.pytest_cache
+htmlcov/
+
+# 로그
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 임시 파일
+*.tmp
+*.bak
+*.swp
+*~
+
+# 백업
+backup/
+*.sql
+
+# 테스트
+test-*
+*-test
+tests/temp/
+
+# Node (프론트엔드에서 사용)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

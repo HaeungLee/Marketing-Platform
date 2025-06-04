@@ -11,7 +11,7 @@ import os
 # Add the src directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend', 'src'))
 
-from infrastructure.ai.ollama_service import OllamaService
+from infrastructure.ai.gemini_service import GeminiService
 from config.settings import settings
 
 async def demo_ai_content_generation():
@@ -20,7 +20,7 @@ async def demo_ai_content_generation():
     print("=" * 50)
     
     # Initialize AI service
-    ai_service = OllamaService(settings.ollama_base_url)
+    ai_service = GeminiService()
     
     try:
         # Check available models
@@ -29,8 +29,7 @@ async def demo_ai_content_generation():
         if models:
             print(f"✅ 모델 발견: {', '.join(models)}")
         else:
-            print("⚠️  사용 가능한 모델이 없습니다. Ollama를 먼저 설치하고 모델을 다운로드하세요.")
-            print("   ollama pull llama2")
+            print("⚠️  사용 가능한 모델이 없습니다. Gemini API 키를 확인하세요.")
             return
         
         print("\n📝 AI 콘텐츠 생성 데모")
@@ -73,7 +72,7 @@ async def demo_ai_content_generation():
         
     except Exception as e:
         print(f"❌ AI 서비스 연결 실패: {str(e)}")
-        print("💡 Ollama가 실행 중인지 확인해보세요: ollama serve")
+        print("💡 Gemini API 키가 올바른지 확인해보세요.")
     
     finally:
         await ai_service.close()

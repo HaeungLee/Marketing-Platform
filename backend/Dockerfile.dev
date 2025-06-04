@@ -1,0 +1,46 @@
+# 개발환경용 백엔드 Dockerfile - 핫 리로드 지원
+FROM python:3.11-slim
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 시스템 의존성 설치
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libpq-dev \
+    curl \
+    git \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python 의존성 파일 복사
+COPY requirements.txt requirements-dev.txt ./
+
+# Python 패키지 설치 (개발 의존성 포함)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-dev.txt
+
+# 개발용 도구 설치
+RUN pip install --no-cache-dir \
+    ipython \
+    ipdb \
+    black \
+    isort \
+    flake8 \
+    pytest-watch
+
+# static 디렉토리 생성
+RUN mkdir -p static/images
+
+# 포트 노출
+EXPOSE 8000
+
+# 환경변수 설정
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# 개발 서버 시작 (핫 리로드 활성화)
+CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--log-level", "debug"]
