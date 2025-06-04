@@ -9,6 +9,7 @@ venv_py311/
 .env
 *.log
 *.sqlite3
+vnev/
 venv/
 # Byte-compiled / optimized / DLL files
 *.pyc

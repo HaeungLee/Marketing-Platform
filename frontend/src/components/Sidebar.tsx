@@ -29,9 +29,9 @@ const menuItems = [
   { path: "/app/content", icon: FiEdit3, label: "콘텐츠 생성" },
   { path: "/app/flyer", icon: FiFileText, label: "전단지 생성" },
   { path: "/app/population", icon: FiTrendingUp, label: "인구 통계" },
+  { path: "/app/sbiz365", icon: FiBarChart, label: "소상공인365 분석" },
   { path: "/app/analytics", icon: FiBarChart, label: "분석 & 인사이트" },
   { path: "/app/settings", icon: FiSettings, label: "설정" },
-  { path: "/app/sbiz365", icon: FiBarChart, label: "소상공인365 분석" },
 ];
 
 const Sidebar: React.FC = () => {

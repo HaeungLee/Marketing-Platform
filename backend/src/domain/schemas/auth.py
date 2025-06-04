@@ -4,7 +4,7 @@ Auth 관련 Pydantic 모델
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional
-from domain.entities.user_type import UserType
+from src.domain.entities.user_type import UserType
 
 # 기본 사용자 등록 모델
 class UserRegisterBase(BaseModel):

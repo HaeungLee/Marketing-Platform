@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, Heading, VStack } from "@chakra-ui/react";
-import GraphVisualization from "../components/GraphVisualization";
 
 const Sbiz365: React.FC = () => {
   return (
@@ -40,8 +39,7 @@ const Sbiz365: React.FC = () => {
           ></iframe>
         </Box>
 
-        <Box w="100%" h="600px" border="1px solid #ccc" borderRadius="md">
-          <iframe
+        <Box w="100%" h="600px" border="1px solid #ccc" borderRadius="md">          <iframe
             src="https://bigdata.sbiz.or.kr/#/openApi/simple?certKey=2ef6b4121693d2cf8f157ea952b2d2451bc30d606988fb13ad82e53b892b36d8"
             width="100%"
             height="100%"
@@ -49,8 +47,6 @@ const Sbiz365: React.FC = () => {
             title="간단분석"
           ></iframe>
         </Box>
-
-        <GraphVisualization />
       </VStack>
     </Box>
   );

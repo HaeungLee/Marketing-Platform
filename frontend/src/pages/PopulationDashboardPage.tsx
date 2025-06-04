@@ -36,8 +36,8 @@ import axios from "axios";
 
 interface Location {
   provinces: string[];
-  cities: string[] | Record<string, string[]>;
-  districts: Record<string, Record<string, string[]>>;
+  cities: string[];
+  districts: string[];
 }
 
 interface PopulationData {
@@ -57,12 +57,11 @@ interface PopulationData {
   };
 }
 
-const PopulationDashboardPage: FC = () => {
-  const [locations, setLocations] = useState<Location>({
+const PopulationDashboardPage: FC = () => {  const [locations, setLocations] = useState<Location>({
     provinces: [],
     cities: [],
-    districts: {},
-  } as Location);
+    districts: [],
+  });
   const [selectedProvince, setSelectedProvince] = useState<string>("");
   const [selectedCity, setSelectedCity] = useState<string>("");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
@@ -146,14 +145,12 @@ const PopulationDashboardPage: FC = () => {
         }
       };
       fetchCities();
-    } else {
-      // 시/도 선택이 해제되면 시/군/구 목록 초기화
-      setLocations((prev) => ({ ...prev, cities: [], districts: {} }));
+    } else {      // 시/도 선택이 해제되면 시/군/구 목록 초기화
+      setLocations((prev) => ({ ...prev, cities: [], districts: [] }));
       setSelectedCity("");
       setSelectedDistrict("");
     }
   }, [selectedProvince, toast]);
-
   // 시/군/구 선택 시 읍/면/동 목록 업데이트
   useEffect(() => {
     if (selectedProvince && selectedCity) {
@@ -162,13 +159,13 @@ const PopulationDashboardPage: FC = () => {
         setError(null);
         try {
           const response = await axios.get(
-            `/api/v1/population/locations?province=${selectedProvince}&city=${selectedCity}`
+            `/api/v1/population/locations?province=${encodeURIComponent(selectedProvince)}&city=${encodeURIComponent(selectedCity)}`
           );
-          // districts가 객체 형태로 오는 경우를 처리
-          const districtsData = response.data.districts;
+          // API는 districts 배열을 직접 반환합니다
+          const districtsArray = response.data.districts || [];
           setLocations((prev) => ({
             ...prev,
-            districts: districtsData || {},
+            districts: districtsArray,
           }));
         } catch (error) {
           const message =
@@ -188,6 +185,10 @@ const PopulationDashboardPage: FC = () => {
         }
       };
       fetchDistricts();
+    } else {
+      // 시/군/구 선택이 해제되면 읍/면/동 목록 초기화
+      setLocations((prev) => ({ ...prev, districts: [] }));
+      setSelectedDistrict("");
     }
   }, [selectedProvince, selectedCity, toast]);
   // 지역 선택 시 인구 통계 데이터 로드
@@ -203,81 +204,72 @@ const PopulationDashboardPage: FC = () => {
               city: selectedCity,
               district: selectedDistrict,
             },
-          });
+          });          // API 응답이 배열인 경우 첫 번째 항목 사용
+          const responseData = response.data.data && response.data.data.length > 0
+            ? response.data.data[0]
+            : null;
 
-          // API 응답이 배열인 경우 첫 번째 항목 사용
-          const responseData = Array.isArray(response.data)
-            ? response.data[0]
-            : response.data;
-
-          // 연령대별 데이터를 배열로 변환
-          const ageGroups = [
+          if (!responseData) {
+            throw new Error("해당 지역의 데이터를 찾을 수 없습니다.");
+          }          // 연령대별 데이터를 배열로 변환
+          console.log("API Response Data:", responseData); // 디버깅용
+            const ageGroups = [
             {
               ageGroup: "0-9",
-              male: parseInt(responseData.age_0_9_male) || 0,
-              female: parseInt(responseData.age_0_9_female) || 0,
+              male: parseInt(responseData.gender_breakdown?.age_0_9_male) || 0,
+              female: parseInt(responseData.gender_breakdown?.age_0_9_female) || 0,
             },
             {
               ageGroup: "10-19",
-              male: parseInt(responseData.age_10_19_male) || 0,
-              female: parseInt(responseData.age_10_19_female) || 0,
+              male: parseInt(responseData.gender_breakdown?.age_10_19_male) || 0,
+              female: parseInt(responseData.gender_breakdown?.age_10_19_female) || 0,
             },
             {
               ageGroup: "20-29",
-              male: parseInt(responseData.age_20_29_male) || 0,
-              female: parseInt(responseData.age_20_29_female) || 0,
+              male: parseInt(responseData.gender_breakdown?.age_20_29_male) || 0,
+              female: parseInt(responseData.gender_breakdown?.age_20_29_female) || 0,
             },
             {
               ageGroup: "30-39",
-              male: parseInt(responseData.age_30_39_male) || 0,
-              female: parseInt(responseData.age_30_39_female) || 0,
+              male: parseInt(responseData.gender_breakdown?.age_30_39_male) || 0,
+              female: parseInt(responseData.gender_breakdown?.age_30_39_female) || 0,
             },
             {
               ageGroup: "40-49",
-              male: parseInt(responseData.age_40_49_male) || 0,
-              female: parseInt(responseData.age_40_49_female) || 0,
+              male: parseInt(responseData.gender_breakdown?.age_40_49_male) || 0,
+              female: parseInt(responseData.gender_breakdown?.age_40_49_female) || 0,
             },
             {
               ageGroup: "50-59",
-              male: parseInt(responseData.age_50_59_male) || 0,
-              female: parseInt(responseData.age_50_59_female) || 0,
+              male: parseInt(responseData.gender_breakdown?.age_50_59_male) || 0,
+              female: parseInt(responseData.gender_breakdown?.age_50_59_female) || 0,
             },
             {
               ageGroup: "60-69",
-              male: parseInt(responseData.age_60_69_male) || 0,
-              female: parseInt(responseData.age_60_69_female) || 0,
+              male: parseInt(responseData.gender_breakdown?.age_60_69_male) || 0,
+              female: parseInt(responseData.gender_breakdown?.age_60_69_female) || 0,
             },
             {
               ageGroup: "70-79",
-              male: parseInt(responseData.age_70_79_male) || 0,
-              female: parseInt(responseData.age_70_79_female) || 0,
+              male: parseInt(responseData.gender_breakdown?.age_70_79_male) || 0,
+              female: parseInt(responseData.gender_breakdown?.age_70_79_female) || 0,
             },
             {
               ageGroup: "80+",
               male:
-                (parseInt(responseData.age_80_89_male) || 0) +
-                (parseInt(responseData.age_90_99_male) || 0) +
-                (parseInt(responseData.age_100_plus_male) || 0),
+                (parseInt(responseData.gender_breakdown?.age_80_89_male) || 0) +
+                (parseInt(responseData.gender_breakdown?.age_90_99_male) || 0) +
+                (parseInt(responseData.gender_breakdown?.age_100_plus_male) || 0),
               female:
-                (parseInt(responseData.age_80_89_female) || 0) +
-                (parseInt(responseData.age_90_99_female) || 0) +
-                (parseInt(responseData.age_100_plus_female) || 0),
+                (parseInt(responseData.gender_breakdown?.age_80_89_female) || 0) +
+                (parseInt(responseData.gender_breakdown?.age_90_99_female) || 0) +
+                (parseInt(responseData.gender_breakdown?.age_100_plus_female) || 0),
             },
-          ];
-
-          // 총 인구 데이터 설정 (API 응답에서 직접 가져오거나, 연령대별 합계 계산)
-          const totalMale = ageGroups.reduce(
-            (sum, item) => sum + (item.male || 0),
-            0
-          );
-          const totalFemale = ageGroups.reduce(
-            (sum, item) => sum + (item.female || 0),
-            0
-          );
+          ];// 총 인구 데이터 설정 (API 응답에서 직접 가져오기)
           const totalData = {
-            total: totalMale + totalFemale,
-            male: totalMale,
-            female: totalFemale,
+            total: parseInt(responseData.total_population) || 0,
+            male: parseInt(responseData.total_male) || 0,
+            female: parseInt(responseData.total_female) || 0,
           };
 
           // 상태 업데이트
@@ -394,21 +386,18 @@ const PopulationDashboardPage: FC = () => {
                 placeholder={isLoading ? "로드 중..." : "읍/면/동 선택"}
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
-                isDisabled={isLoading || !selectedCity}
-              >
+                isDisabled={isLoading || !selectedCity}              >
                 {isLoading ? (
                   <option disabled>로드 중...</option>
                 ) : selectedProvince &&
                   selectedCity &&
-                  locations.districts[selectedProvince]?.[selectedCity]
-                    ?.length > 0 ? (
-                  locations.districts[selectedProvince][selectedCity].map(
-                    (district: string) => (
-                      <option key={district} value={district}>
-                        {district}
-                      </option>
-                    )
-                  )
+                  Array.isArray(locations.districts) &&
+                  locations.districts.length > 0 ? (
+                  locations.districts.map((district: string) => (
+                    <option key={district} value={district}>
+                      {district}
+                    </option>
+                  ))
                 ) : (
                   <option disabled>선택 가능한 읍/면/동이 없습니다</option>
                 )}

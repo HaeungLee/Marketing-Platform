@@ -13,7 +13,7 @@ from src.presentation.api.v1.auth import router as auth_router
 from src.presentation.api.v1.business import router as business_router
 from src.presentation.api.v1.content import router as content_router
 from src.presentation.api.v1.analysis import router as analysis_router
-from src.presentation.api.v1.population import router as population_router
+from src.presentation.api.population import router as population_router
 from src.presentation.api.image_router import router as image_router
 # 테스트 라우터는 개발 환경에서만 필요할 경우 조건부로 임포트
 # from src.presentation.api.v1.test import router as test_router
