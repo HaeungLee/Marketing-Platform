@@ -27,8 +27,8 @@ import type { ImageGenerationResponse } from "../types/api";
 const ContentGeneratorPage: React.FC = () => {
   // 단순화된 텍스트 콘텐츠 생성 상태
   const [prompt, setPrompt] = useState("");
-  const [contentType, setContentType] = useState("blog");
-  const [tone, setTone] = useState("친근한");
+  const [contentType, setContentType] = useState<string>("");
+  const [tone, setTone] = useState<string>("");
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -132,40 +132,66 @@ const ContentGeneratorPage: React.FC = () => {
     setIsImageLoading(true);
 
     try {
-      const result = await contentApi.generateImage({
-        prompt: imagePrompt,
-        style: imageStyle,
-      });
-
-      if (result.success) {
-        setGeneratedImage(result);
-        toast({
-          title: "성공",
-          description: "이미지가 성공적으로 생성되었습니다!",
-          status: "success",
-          duration: 3000,
-          isClosable: true,
-        });
-      } else {
-        toast({
-          title: "생성 실패",
-          description: result.error || "이미지 생성에 실패했습니다.",
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
+      // contentType과 tone은 선택적으로 포함
+      const requestData: { prompt: string; content_type?: string; tone?: string } = {
+        prompt: prompt.trim(),
+      };
+  
+      if (contentType) {
+        requestData.content_type = contentType;
       }
-    } catch (error: any) {
+      if (tone) {
+        requestData.tone = tone;
+      }
+  
+      console.log("요청 데이터:", requestData);
+  
+      const response = await fetch(
+        "http://localhost:8000/api/v1/content/generate/simple",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Origin: window.location.origin,
+          },
+          body: JSON.stringify(requestData),
+          credentials: "omit"
+        }
+      );
+  
+      console.log("응답 상태:", response.status);
+      console.log("응답 헤더:", [...response.headers.entries()]);
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API 오류 응답:", errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+  
+      const data = await response.json();
+      console.log("응답 데이터:", data);
+      setResponse(data.content);
+  
       toast({
-        title: "오류 발생",
-        description:
-          error.response?.data?.detail || "이미지 생성 중 오류가 발생했습니다.",
-        status: "error",
+        title: "성공",
+        description: "콘텐츠가 성공적으로 생성되었습니다!",
+        status: "success",
         duration: 3000,
         isClosable: true,
       });
+    } catch (error: any) {
+      console.error("콘텐츠 생성 오류:", error);
+      toast({
+        title: "오류 발생",
+        description:
+          error.response?.data?.detail || error.message || "콘텐츠 생성 중 오류가 발생했습니다.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     } finally {
-      setIsImageLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -214,6 +240,7 @@ const ContentGeneratorPage: React.FC = () => {
                     value={contentType}
                     onChange={(e) => setContentType(e.target.value)}
                   >
+                    <option value="">선택하세요</option>
                     <option value="blog">블로그 포스트</option>
                     <option value="instagram">인스타그램</option>
                     <option value="youtube">유튜브</option>
@@ -222,11 +249,12 @@ const ContentGeneratorPage: React.FC = () => {
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel>톤앤매너</FormLabel>
+                  <FormLabel>성격</FormLabel>
                   <Select
                     value={tone}
                     onChange={(e) => setTone(e.target.value)}
                   >
+                    <option value="">선택하세요</option>
                     <option value="친근한">친근한</option>
                     <option value="전문적인">전문적인</option>
                     <option value="캐주얼한">캐주얼한</option>

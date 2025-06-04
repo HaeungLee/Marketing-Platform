@@ -380,9 +380,55 @@ async def generate_simple_content(
         title = lines[0] if lines else "생성된 콘텐츠"
         content = "\n".join(lines[1:]) if len(lines) > 1 else content_text
         
-        # 기본 해시태그와 키워드 생성
-        default_hashtags = ["마케팅", "콘텐츠", content_type, tone]
-        keywords = ["마케팅", "콘텐츠", content_type]
+        # AI를 활용한 해시태그 생성
+        try:
+            # 모든 톤 타입에 대해 해시태그 생성
+            hashtag_prompt = f"""
+            다음 콘텐츠에 어울리는 해시태그 5개를 생성해주세요.
+            콘텐츠 타입: {content_type}
+            톤: {tone}
+            콘텐츠: {content_text[:500]}  # 내용이 길 경우 앞부분만 사용
+            
+            - 해시태그는 '#'으로 시작하는 단어로 만들어주세요.
+            - 인기 있는 해시태그 위주로 생성해주세요.
+            - 콘텐츠의 톤({tone})에 맞는 해시태그를 생성해주세요.
+            - 콤마로 구분된 문자열로 반환해주세요.
+            예시: #마케팅 #콘텐츠 #SNS #홍보 #인스타그램
+            """
+            
+            # 해시태그 생성 요청
+            hashtag_response = model.generate_content(hashtag_prompt)
+            hashtags_text = hashtag_response.text.strip()
+            
+            # 생성된 해시태그 파싱
+            if hashtags_text:
+                # 쉼표나 공백으로 구분하여 리스트로 변환
+                generated_hashtags = [tag.strip() for tag in hashtags_text.replace('#', ' #').split() if tag.startswith('#')]
+                # 중복 제거
+                generated_hashtags = list(dict.fromkeys(generated_hashtags))
+                # 최대 5개로 제한
+                default_hashtags = generated_hashtags[:5]
+            else:
+                # 기본 해시태그 (톤에 맞게 조정)
+                default_hashtags = [
+                    f"#{tone}스타일", 
+                    f"#{content_type}콘텐츠", 
+                    "#마케팅자동화", 
+                    f"#{tone}마케팅",
+                    "#디지털마케팅"
+                ]
+                
+        except Exception as e:
+            print(f"해시태그 생성 중 오류: {str(e)}")
+            default_hashtags = [
+                f"#{tone}스타일", 
+                f"#{content_type}콘텐츠", 
+                "#마케팅자동화", 
+                f"#{tone}마케팅",
+                "#디지털마케팅"
+            ]
+            
+        keywords = ["마케팅", "콘텐츠", content_type, tone]
         
         # 결과 반환
         return ContentGenerationResponse(
