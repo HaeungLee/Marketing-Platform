@@ -13,6 +13,7 @@ import AuthCallbackPage from "./pages/AuthCallbackPage";
 import PopulationDashboardPage from "./pages/PopulationDashboardPage";
 import FlyerGenerator from "./pages/FlyerGenerator";
 import ErrorBoundary from "./components/ErrorBoundary";
+import Sbiz365 from "./pages/Sbiz365";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           <Route path="flyer" element={<FlyerGenerator />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="sbiz365" element={<Sbiz365 />} />
         </Route>
       </Routes>
     </Box>
