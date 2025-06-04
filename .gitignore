@@ -27,4 +27,8 @@ yarn-error.log*
 backup/*
 node_modules/*
 docs/*
-mcp-server/*
+
+# MCP Server
+mcp-server/node_modules/
+mcp-server/dist/
+mcp-server/*.log
