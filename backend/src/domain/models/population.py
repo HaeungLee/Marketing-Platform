@@ -8,7 +8,7 @@ class PopulationStatistics(Base):
     administrative_code = Column(String(20), nullable=False, index=True)
     reference_date = Column(Date, nullable=False, index=True)
     province = Column(String(20), nullable=False)
-    city = Column(String(20), nullable=False)
+    city = Column(String(20), nullable=True)
     district = Column(String(20), nullable=False)
     
     # Age groups - Male

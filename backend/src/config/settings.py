@@ -37,11 +37,11 @@ class Settings(BaseSettings):
     kakao_redirect_uri: str = "http://localhost:3000/auth/kakao/callback"
 
     # PostgreSQL 설정
-    postgres_user: str = "postgres"
-    postgres_password: str = "1234"
-    postgres_host: str = "localhost"
+    postgres_user: str = "test"
+    postgres_password: str = "test"
+    postgres_host: str = "localhost"  # Docker 컨테이너 외부에서 접근하므로 localhost 사용
     postgres_port: str = "5432"
-    postgres_db: str = "marketing_platform"
+    postgres_db: str = "testdb"
 
     # PostgreSQL 연결 풀 설정
     mcp_min_connections: int = 5

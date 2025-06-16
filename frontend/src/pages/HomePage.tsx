@@ -21,7 +21,7 @@ import { HamburgerIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import { Link as RouterLink } from 'react-router-dom';
 import logoImage from '../assets/logo.png';
 import targetImage from '../assets/target.jpg';
-import aiImage from '../assets/ai.jpg';
+import aiImage from '../assets/ai.webp';
 import marketingImage from '../assets/marketing.webp';
 
 // TypeScript 인터페이스

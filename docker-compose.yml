@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PostgreSQL 데이터베이스
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg17
     container_name: marketing_platform_db
     restart: unless-stopped
     environment:

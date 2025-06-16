@@ -1,18 +1,19 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional, List
 import asyncpg
-import os
-from datetime import datetime
+from ...config.settings import Settings
 
 router = APIRouter(tags=["population"])
 
 # 데이터베이스 연결 설정
-DATABASE_URL = f"postgresql://{os.getenv('DB_USER', 'postgres')}:{os.getenv('DB_PASSWORD', '1234')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'marketing_platform')}"
+settings = Settings()
+DATABASE_URL = settings.database_url.replace("postgresql+asyncpg://", "postgresql://")
 
 async def get_db_connection():
     try:
         return await asyncpg.connect(DATABASE_URL)
     except Exception as e:
+        print(f"Database connection error: {str(e)}")  # 디버깅을 위한 로그 추가
         raise HTTPException(status_code=500, detail=f"Database connection failed: {str(e)}")
 
 @router.get("/locations")

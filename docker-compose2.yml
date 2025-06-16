@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  postgres:
+    container_name: postgres17
+    image: pgvector/pgvector:pg17
+    restart: always
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: testdb
+      TZ: Asia/Seoul
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - service
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: test@test.com
+      PGADMIN_DEFAULT_PASSWORD: test
+      TZ: Asia/Seoul
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - service
+
+volumes:
+  pgdata:
+  pgadmin-data:
+
+networks:
+  service:
+    driver: bridge
+    
+# 컨테이너 실행
+# docker-compose up -d --build
+# PostgreSQL 컨테이너에 접속
+# docker exec -it postgres17 psql -U test -d testdb
+# pgvector 확장 활성화
+# CREATE EXTENSION IF NOT EXISTS vector;
+# 확장이 잘 설치됐는지 확인
+# SELECT extname FROM pg_extension;
+# vector가 출력되면 성공
+
+# 테스트 방법
+# 벡터 컬럼이 있는 테이블 생성
+# CREATE TABLE items (id SERIAL PRIMARY KEY, embedding vector(3));
+# 샘플 벡터 삽입:
+# INSERT INTO items (embedding) VALUES ('[1,2,3]'), ('[4,5,6]');
+# 유사도 검색 테스트:
+# SELECT * FROM items ORDER BY embedding <-> '[3,1,2]' LIMIT 1;
+# L2 거리 기준으로 가장 가까운 벡터가 반환
+
