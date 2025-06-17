@@ -1,0 +1,28 @@
+{
+  "test_timestamp": "2025-06-17T12:30:46.190145",
+  "api_endpoint": "https://apis.data.go.kr/B553077/api/open/sdsc2",
+  "ssl_status": "HTTPS 적용",
+  "update_compliance": {
+    "https_migration": false,
+    "coords_expansion": false,
+    "polygon_format": false,
+    "data_source_update": false,
+    "overall_compliance": false
+  },
+  "test_results": {
+    "https_connection": {
+      "status": "failed",
+      "https_enabled": false,
+      "error": "연결 실패"
+    },
+    "coords_expansion": {
+      "error": "API 요청 실패: None"
+    },
+    "polygon_format": {
+      "error": "API 요청 실패: None"
+    },
+    "commercial_district_source": {
+      "error": "API 요청 실패: None"
+    }
+  }
+}

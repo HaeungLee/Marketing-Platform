@@ -96,16 +96,144 @@ const CommercialAnalysisPage: React.FC = () => {
 
     } catch (error) {
       console.error("상권 분석 데이터 로딩 실패:", error);
+      
+      // API 실패 시 풍부한 mockup 데이터 제공
+      const mockNearbyStores: BusinessStore[] = Array.from({ length: 45 }, (_, i) => {
+        const storeTypes = businessType ? [businessType] : [
+          "일반음식점", "카페", "편의점", "미용실", "의류", "치킨", "피자", "족발·보쌈", 
+          "중국집", "분식", "도시락", "빵집", "약국", "화장품", "휴대폰"
+        ];
+        
+        const randomType = storeTypes[Math.floor(Math.random() * storeTypes.length)];
+        
+        return {
+          id: i + 1,
+          store_number: `STORE_${String(i + 1).padStart(6, '0')}`,
+          store_name: `${randomType === "일반음식점" ? ["맛있는집", "홍익각", "서울반점", "명가", "황금각"][Math.floor(Math.random() * 5)] :
+                       randomType === "카페" ? ["스타벅스", "커피빈", "투썸플레이스", "카페드롭탑", "블루보틀"][Math.floor(Math.random() * 5)] :
+                       randomType === "편의점" ? ["CU", "GS25", "세븐일레븐", "이마트24", "미니스톱"][Math.floor(Math.random() * 5)] :
+                       randomType === "미용실" ? ["헤어샵", "뷰티살롱", "스타일샵", "헤어플러스", "뷰티스토리"][Math.floor(Math.random() * 5)] :
+                       "상호명"} ${selectedLocation.name}점`,
+          business_code: `BIZ_${String(i + 1).padStart(4, '0')}`,
+          business_name: randomType,
+          longitude: selectedLocation.lng + (Math.random() - 0.5) * 0.02,
+          latitude: selectedLocation.lat + (Math.random() - 0.5) * 0.02,
+          distance: Math.floor(Math.random() * radius) + 50,
+          jibun_address: `서울특별시 ${selectedLocation.name} ${Math.floor(Math.random() * 500) + 1}번지`,
+          road_address: `서울특별시 ${selectedLocation.name} ${["중앙로", "번영로", "평화로", "희망로", "미래로"][Math.floor(Math.random() * 5)]} ${Math.floor(Math.random() * 200) + 1}`,
+          sido_name: "서울특별시",
+          sigungu_name: selectedLocation.name === "서울역" ? "중구" : 
+                       selectedLocation.name === "명동" ? "중구" :
+                       selectedLocation.name === "강남역" ? "강남구" :
+                       selectedLocation.name === "홍대입구" ? "마포구" : "광진구",
+          dong_name: `${selectedLocation.name}동`,
+          building_name: `${selectedLocation.name} 상가 ${Math.floor(Math.random() * 20) + 1}동`,
+          floor_info: `${Math.floor(Math.random() * 5) + 1}층`,
+          room_info: `${Math.floor(Math.random() * 10) + 101}호`,
+          business_status: Math.random() > 0.1 ? "영업" : "휴업",
+          open_date: "2020-01-01",
+          close_date: null,
+          standard_industry_code: `${Math.floor(Math.random() * 9000) + 1000}`,
+          commercial_category_code: `C${Math.floor(Math.random() * 900) + 100}`
+        };
+      });
+      
+      setNearbyStores(mockNearbyStores);
+      
+      // 통계 데이터 mockup
+      const businessTypeStats = [
+        { business_name: "일반음식점", store_count: 1876, percentage: 28.5 },
+        { business_name: "카페", store_count: 1234, percentage: 18.7 },
+        { business_name: "편의점", store_count: 892, percentage: 13.5 },
+        { business_name: "미용실", store_count: 723, percentage: 11.0 },
+        { business_name: "의류", store_count: 656, percentage: 9.9 },
+        { business_name: "치킨", store_count: 445, percentage: 6.8 },
+        { business_name: "피자", store_count: 334, percentage: 5.1 },
+        { business_name: "족발·보쌈", store_count: 267, percentage: 4.1 },
+        { business_name: "중국집", store_count: 198, percentage: 3.0 },
+        { business_name: "분식", store_count: 156, percentage: 2.4 }
+      ];
+      
+      const regionStats = [
+        { region_name: "강남구", store_count: 2847 },
+        { region_name: "송파구", store_count: 2234 },
+        { region_name: "마포구", store_count: 1923 },
+        { region_name: "중구", store_count: 1567 },
+        { region_name: "광진구", store_count: 1345 },
+        { region_name: "성동구", store_count: 1198 },
+        { region_name: "용산구", store_count: 1089 },
+        { region_name: "서초구", store_count: 1023 }
+      ];
+      
+             setStatistics({
+         business_type_stats: businessTypeStats,
+         region_stats: regionStats,
+         filters: {
+           sido_name: "서울특별시",
+           sigungu_name: selectedLocation.name
+         }
+       });
+       
+       // 지역 분석 데이터 생성
+       const mockRegionAnalysis = await generateMockRegionAnalysis(mockNearbyStores);
+       setRegionAnalysis(mockRegionAnalysis);
+      
       toast({
-        title: "데이터 로딩 실패",
-        description: "상권 분석 데이터를 가져오는 중 오류가 발생했습니다. 서버가 실행 중인지 확인해주세요.",
-        status: "error",
-        duration: 5000,
+        title: "데모 데이터 로드됨",
+        description: "실제 API 연결이 실패하여 데모 데이터를 표시합니다.",
+        status: "warning",
+        duration: 3000,
         isClosable: true,
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Mockup 지역 분석 함수
+  const generateMockRegionAnalysis = async (stores: BusinessStore[]): Promise<RegionAnalysis[]> => {
+    // 지역별로 그룹화
+    const regionGroups: { [key: string]: BusinessStore[] } = {};
+    stores.forEach(store => {
+      const region = `${store.sido_name} ${store.sigungu_name}`;
+      if (!regionGroups[region]) {
+        regionGroups[region] = [];
+      }
+      regionGroups[region].push(store);
+    });
+
+    // 각 지역별 분석 생성
+    return Object.entries(regionGroups).map(([region, storeList]) => {
+      const businessTypes: { [key: string]: number } = {};
+      let totalDistance = 0;
+
+      storeList.forEach(store => {
+        businessTypes[store.business_name] = (businessTypes[store.business_name] || 0) + 1;
+        totalDistance += store.distance || 0;
+      });
+
+      const averageDistance = totalDistance / storeList.length;
+      
+      // 경쟁 수준 계산
+      let competitionLevel: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
+      if (storeList.length > 15) competitionLevel = 'HIGH';
+      else if (storeList.length > 8) competitionLevel = 'MEDIUM';
+
+      // 트렌드 키워드 생성
+      const topBusinessTypes = Object.entries(businessTypes)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 3)
+        .map(([type]) => type);
+
+      return {
+        region,
+        totalStores: storeList.length,
+        businessTypes,
+        competitionLevel,
+        averageDistance: Math.round(averageDistance),
+        trends: topBusinessTypes.length > 0 ? topBusinessTypes : ["일반음식점", "카페", "편의점"],
+      };
+    });
   };
 
   const generateRegionAnalysis = async (nearbyData: NearbyStoresResponse): Promise<RegionAnalysis[]> => {

@@ -159,3 +159,4 @@ async def get_items(db: AsyncSession = Depends(get_db)):
         return {"message": "데이터베이스 연결 성공"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+d

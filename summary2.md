@@ -71,7 +71,7 @@
   "stores": [{
     "id": 1,
     "store_name": "강남카페",
-    "business_name": "일반음식점", 
+    "business_name": "일반음식점",
     "latitude": 37.4979,
     "longitude": 127.0276,
     "distance_km": 0.0
