@@ -22,17 +22,19 @@ import {
   FiChevronRight,
   FiFileText,
   FiDatabase,
+  FiActivity,
 } from "react-icons/fi";
 
 const menuItems = [
   { path: "/app", icon: FiHome, label: "대시보드" },
   { path: "/app/business/setup", icon: FiTarget, label: "비즈니스 설정" },
-  { path: "/app/content", icon: FiEdit3, label: "콘텐츠 생성" },
-  { path: "/app/flyer", icon: FiFileText, label: "전단지 생성" },
-  { path: "/app/insights", icon: FiDatabase, label: "실데이터 인사이트" },
+  { path: "/app/content", icon: FiEdit3, label: "콘텐츠 생성 & 전단지" },
+  { path: "/app/target-insights", icon: FiDatabase, label: "타겟 인사이트" },
+  { path: "/app/commercial-analysis", icon: FiBarChart, label: "상권 분석" },
+  { path: "/app/trend-analysis", icon: FiActivity, label: "트렌드 분석" },
   { path: "/app/population", icon: FiTrendingUp, label: "인구 통계" },
-  { path: "/app/sbiz365", icon: FiBarChart, label: "소상공인365 분석" },
   { path: "/app/analytics", icon: FiBarChart, label: "분석 & 인사이트" },
+  { path: "/app/sbiz365", icon: FiBarChart, label: "소상공인365 분석" },
   { path: "/app/settings", icon: FiSettings, label: "설정" },
 ];
 

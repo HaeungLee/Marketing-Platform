@@ -9,8 +9,8 @@ import os
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/insights", tags=["insights"])
 
-# 데이터베이스 연결 설정
-DATABASE_URL = f"postgresql://{os.getenv('DB_USER', 'postgres')}:{os.getenv('DB_PASSWORD', 'postgres')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'marketing_platform')}"
+# 데이터베이스 연결 설정 (Docker 컨테이너 기준)
+DATABASE_URL = f"postgresql://{os.getenv('DB_USER', 'test')}:{os.getenv('DB_PASSWORD', 'test')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'testdb')}"
 
 async def get_db_connection():
     """데이터베이스 연결을 가져옵니다."""
@@ -26,9 +26,9 @@ class InsightsService:
         self.db_config = {
             'host': 'localhost',
             'port': 5432,
-            'database': 'marketing_platform',
-            'user': 'postgres',
-            'password': 'postgres'
+            'database': 'testdb',
+            'user': 'test',
+            'password': 'test'
         }
 
     async def get_target_customer_analysis(

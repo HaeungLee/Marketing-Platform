@@ -9,8 +9,8 @@ from datetime import datetime
 import os
 import sys
 
-# 데이터베이스 연결 설정
-DATABASE_URL = "postgresql://postgres:human1234@localhost:5432/marketing_platform"
+# 데이터베이스 연결 설정 (Docker 컨테이너 기준)
+DATABASE_URL = "postgresql://test:test@localhost:5432/testdb"
 
 async def create_table(connection):
     """인구 통계 테이블 생성"""
@@ -91,42 +91,42 @@ def parse_csv_data(csv_path):
         for _, row in df.iterrows():
             try:
                 record = {
-                    'administrative_code': str(row.get('행정구역코드', '00000')),
-                    'reference_date': datetime(2023, 1, 1).date(),  # 기본 날짜
-                    'province': str(row.get('시도', '인천')),
-                    'city': str(row.get('시군구', row.get('city', '미정'))),
-                    'district': str(row.get('읍면동', row.get('district', '전체'))),
+                    'administrative_code': str(row.get('행정기관코드', '00000')),
+                    'reference_date': datetime(2025, 4, 30).date(),  # CSV 파일의 기준연월 반영
+                    'province': str(row.get('시도명', '서울특별시')),
+                    'city': str(row.get('시군구명', '미정')),
+                    'district': str(row.get('읍면동명', '전체')),
                     
                     # 남성 연령대별 인구
-                    'age_0_9_male': int(row.get('0~9세_남', row.get('age_0_9_male', 0)) or 0),
-                    'age_10_19_male': int(row.get('10~19세_남', row.get('age_10_19_male', 0)) or 0),
-                    'age_20_29_male': int(row.get('20~29세_남', row.get('age_20_29_male', 0)) or 0),
-                    'age_30_39_male': int(row.get('30~39세_남', row.get('age_30_39_male', 0)) or 0),
-                    'age_40_49_male': int(row.get('40~49세_남', row.get('age_40_49_male', 0)) or 0),
-                    'age_50_59_male': int(row.get('50~59세_남', row.get('age_50_59_male', 0)) or 0),
-                    'age_60_69_male': int(row.get('60~69세_남', row.get('age_60_69_male', 0)) or 0),
-                    'age_70_79_male': int(row.get('70~79세_남', row.get('age_70_79_male', 0)) or 0),
-                    'age_80_89_male': int(row.get('80~89세_남', row.get('age_80_89_male', 0)) or 0),
-                    'age_90_99_male': int(row.get('90~99세_남', row.get('age_90_99_male', 0)) or 0),
-                    'age_100_plus_male': int(row.get('100세이상_남', row.get('age_100_plus_male', 0)) or 0),
+                    'age_0_9_male': int(row.get('0~9세_남자', 0) or 0),
+                    'age_10_19_male': int(row.get('10~19세_남자', 0) or 0),
+                    'age_20_29_male': int(row.get('20~29세_남자', 0) or 0),
+                    'age_30_39_male': int(row.get('30~39세_남자', 0) or 0),
+                    'age_40_49_male': int(row.get('40~49세_남자', 0) or 0),
+                    'age_50_59_male': int(row.get('50~59세_남자', 0) or 0),
+                    'age_60_69_male': int(row.get('60~69세_남자', 0) or 0),
+                    'age_70_79_male': int(row.get('70~79세_남자', 0) or 0),
+                    'age_80_89_male': int(row.get('80~89세_남자', 0) or 0),
+                    'age_90_99_male': int(row.get('90~99세_남자', 0) or 0),
+                    'age_100_plus_male': int(row.get('100세 이상_남자', 0) or 0),
                     
                     # 여성 연령대별 인구
-                    'age_0_9_female': int(row.get('0~9세_여', row.get('age_0_9_female', 0)) or 0),
-                    'age_10_19_female': int(row.get('10~19세_여', row.get('age_10_19_female', 0)) or 0),
-                    'age_20_29_female': int(row.get('20~29세_여', row.get('age_20_29_female', 0)) or 0),
-                    'age_30_39_female': int(row.get('30~39세_여', row.get('age_30_39_female', 0)) or 0),
-                    'age_40_49_female': int(row.get('40~49세_여', row.get('age_40_49_female', 0)) or 0),
-                    'age_50_59_female': int(row.get('50~59세_여', row.get('age_50_59_female', 0)) or 0),
-                    'age_60_69_female': int(row.get('60~69세_여', row.get('age_60_69_female', 0)) or 0),
-                    'age_70_79_female': int(row.get('70~79세_여', row.get('age_70_79_female', 0)) or 0),
-                    'age_80_89_female': int(row.get('80~89세_여', row.get('age_80_89_female', 0)) or 0),
-                    'age_90_99_female': int(row.get('90~99세_여', row.get('age_90_99_female', 0)) or 0),
-                    'age_100_plus_female': int(row.get('100세이상_여', row.get('age_100_plus_female', 0)) or 0),
+                    'age_0_9_female': int(row.get('0~9세_여자', 0) or 0),
+                    'age_10_19_female': int(row.get('10~19세_여자', 0) or 0),
+                    'age_20_29_female': int(row.get('20~29세_여자', 0) or 0),
+                    'age_30_39_female': int(row.get('30~39세_여자', 0) or 0),
+                    'age_40_49_female': int(row.get('40~49세_여자', 0) or 0),
+                    'age_50_59_female': int(row.get('50~59세_여자', 0) or 0),
+                    'age_60_69_female': int(row.get('60~69세_여자', 0) or 0),
+                    'age_70_79_female': int(row.get('70~79세_여자', 0) or 0),
+                    'age_80_89_female': int(row.get('80~89세_여자', 0) or 0),
+                    'age_90_99_female': int(row.get('90~99세_여자', 0) or 0),
+                    'age_100_plus_female': int(row.get('100세 이상_여자', 0) or 0),
                     
                     # 전체 합계
-                    'total_male': int(row.get('총_남', row.get('total_male', 0)) or 0),
-                    'total_female': int(row.get('총_여', row.get('total_female', 0)) or 0),
-                    'total_population': int(row.get('총인구', row.get('total_population', 0)) or 0),
+                    'total_male': int(row.get('남자총합', 0) or 0),
+                    'total_female': int(row.get('여자총합', 0) or 0),
+                    'total_population': int(row.get('총인구수', 0) or 0),
                 }
                 
                 # 총인구가 0이거나 계산되지 않은 경우 계산
@@ -216,7 +216,7 @@ async def main():
         await create_table(connection)
         
         # CSV 파일 처리
-        csv_path = "../docs/population_with_total_columns.csv"
+        csv_path = "../docs/totalpopulation/population_with_total_columns.csv"
         if not os.path.exists(csv_path):
             print(f"❌ CSV 파일을 찾을 수 없습니다: {csv_path}")
             return

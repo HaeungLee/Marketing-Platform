@@ -6,7 +6,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from fastapi import HTTPException, status
 
-from config.settings import settings
+from src.config.settings import settings
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30

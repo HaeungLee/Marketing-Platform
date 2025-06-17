@@ -127,12 +127,27 @@ export const contentApi = {
   ): Promise<ContentGenerationResponse> => {
     const response = await apiClient.post("/content/generate", data);
     return response.data;
-  }, // 이미지 생성
+  },   // 이미지 생성
   generateImage: async (
     data: ImageGenerationRequest
   ): Promise<ImageGenerationResponse> => {
-    const response = await apiClient.post("/api/images/generate", data);
-    return response.data;
+    // 이미지 생성 API는 /api/v1 prefix 밖에 있으므로 직접 호출
+    const response = await fetch("http://localhost:8000/api/images/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(localStorage.getItem("access_token") && {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        }),
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
   },
 };
 

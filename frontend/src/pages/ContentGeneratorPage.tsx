@@ -20,6 +20,7 @@ import {
   Badge,
   Heading,
 } from "@chakra-ui/react";
+import { DownloadIcon, RepeatIcon } from "@chakra-ui/icons";
 import apiClient from "../services/api";
 import { contentApi } from "../services/apiService";
 import type { ImageGenerationResponse } from "../types/api";
@@ -171,14 +172,20 @@ const ContentGeneratorPage: React.FC = () => {
 
   return (
     <Box p={6}>
-      <Text fontSize="2xl" fontWeight="bold" mb={6}>
-        AI 콘텐츠 생성
-      </Text>
+      <VStack spacing={4} align="stretch" mb={6}>
+        <Heading size="lg" color="gray.800">
+          📝 콘텐츠 생성 & 전단지 제작
+        </Heading>
+        <Text color="gray.600">
+          AI 기반 마케팅 콘텐츠와 전단지를 한 번에 생성하세요
+        </Text>
+      </VStack>
 
-      <Tabs>
+      <Tabs variant="enclosed" colorScheme="brand">
         <TabList>
-          <Tab>텍스트 콘텐츠</Tab>
-          <Tab>이미지 생성</Tab>
+          <Tab>📝 텍스트 콘텐츠</Tab>
+          <Tab>🖼️ 이미지 생성</Tab>
+          <Tab>📄 전단지 제작</Tab>
         </TabList>
 
         <TabPanels>
@@ -317,20 +324,140 @@ const ContentGeneratorPage: React.FC = () => {
                   <Text fontWeight="bold" mb={4}>
                     생성된 이미지:
                   </Text>
-                  <Image
-                    src={`http://127.0.0.1:8001${generatedImage.image_url}`}
-                    alt="Generated marketing image"
-                    maxW="100%"
-                    borderRadius="md"
-                    boxShadow="md"
-                  />
+                  {generatedImage.image_data ? (
+                    <Image
+                      src={`data:image/png;base64,${generatedImage.image_data}`}
+                      alt="Generated marketing image"
+                      maxW="100%"
+                      borderRadius="md"
+                      boxShadow="md"
+                    />
+                  ) : generatedImage.image_url ? (
+                    <Image
+                      src={`http://localhost:8000${generatedImage.image_url}`}
+                      alt="Generated marketing image"
+                      maxW="100%"
+                      borderRadius="md"
+                      boxShadow="md"
+                    />
+                  ) : (
+                    <Text color="red.500">이미지를 표시할 수 없습니다.</Text>
+                  )}
                   <Text fontSize="sm" color="gray.600" mt={2}>
                     파일명: {generatedImage.filename}
                   </Text>
                   <Text fontSize="sm" color="gray.500" mt={1}>
-                    생성 시간:{" "}
-                    {new Date(generatedImage.created_at).toLocaleString()}
+                    생성 시간: {generatedImage.created_at ? new Date(generatedImage.created_at).toLocaleString() : "방금 전"}
                   </Text>
+                </Box>
+              )}
+            </VStack>
+          </TabPanel>
+
+          {/* 전단지 제작 탭 */}
+          <TabPanel>
+            <VStack spacing={6} align="stretch">
+              <Box mb={4}>
+                <Heading size="md" mb={3}>🎨 AI 전단지 생성기</Heading>
+                <Text fontSize="sm" color="gray.600">
+                  원하는 전단지 스타일과 내용을 설명하면 AI가 전단지 이미지를 생성합니다.
+                  구체적인 디자인 요소와 텍스트 내용을 포함하여 설명해주세요.
+                </Text>
+              </Box>
+
+              <FormControl>
+                <FormLabel>전단지 디자인 프롬프트</FormLabel>
+                <Textarea
+                  placeholder="예: 모던한 스타일의 카페 전단지, 빨간색과 흰색 테마, '신메뉴 출시' 텍스트 포함, 미니멀한 디자인"
+                  value={imagePrompt}
+                  onChange={(e) => setImagePrompt(e.target.value)}
+                  rows={4}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>디자인 스타일</FormLabel>
+                <Select
+                  value={imageStyle}
+                  onChange={(e) => setImageStyle(e.target.value)}
+                >
+                  <option value="professional">프로페셔널</option>
+                  <option value="casual">캐주얼</option>
+                  <option value="modern">모던</option>
+                  <option value="vintage">빈티지</option>
+                  <option value="minimalist">미니멀</option>
+                </Select>
+              </FormControl>
+
+              <Button
+                colorScheme="brand"
+                size="lg"
+                onClick={handleImageGenerate}
+                isLoading={isImageLoading}
+                loadingText="전단지 생성 중..."
+              >
+                🎨 전단지 생성하기
+              </Button>
+
+              {generatedImage && (
+                <Box>
+                  <Text fontWeight="bold" mb={3}>
+                    생성된 전단지:
+                  </Text>
+                  <Box
+                    border="2px"
+                    borderColor="gray.200"
+                    borderRadius="md"
+                    overflow="hidden"
+                    maxW="500px"
+                    mx="auto"
+                  >
+                    {generatedImage.image_data ? (
+                      <Image
+                        src={`data:image/png;base64,${generatedImage.image_data}`}
+                        alt="Generated Flyer"
+                        width="100%"
+                        height="auto"
+                      />
+                    ) : generatedImage.image_url ? (
+                      <Image
+                        src={`http://localhost:8000${generatedImage.image_url}`}
+                        alt="Generated Flyer"
+                        width="100%"
+                        height="auto"
+                      />
+                    ) : (
+                      <Text color="red.500">이미지를 표시할 수 없습니다.</Text>
+                    )}
+                   </Box>
+                   <HStack justify="center" mt={4}>
+                     <Button
+                       leftIcon={<DownloadIcon />}
+                       colorScheme="blue"
+                       onClick={() => {
+                         if (generatedImage?.image_data) {
+                           const link = document.createElement('a');
+                           link.download = 'generated-flyer.png';
+                           link.href = `data:image/png;base64,${generatedImage.image_data}`;
+                           link.click();
+                         } else if (generatedImage?.image_url) {
+                           const link = document.createElement('a');
+                           link.download = 'generated-flyer.png';
+                           link.href = `http://localhost:8000${generatedImage.image_url}`;
+                           link.click();
+                         }
+                       }}
+                    >
+                      다운로드
+                    </Button>
+                    <Button
+                      leftIcon={<RepeatIcon />}
+                      variant="outline"
+                      onClick={() => setGeneratedImage(null)}
+                    >
+                      새로 생성
+                    </Button>
+                  </HStack>
                 </Box>
               )}
             </VStack>

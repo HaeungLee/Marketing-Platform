@@ -6,8 +6,8 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
-from config.database import Base
-from domain.entities.user_type import UserType
+from src.config.database import Base
+from src.domain.entities.user_type import UserType
 
 class User(Base):
     __tablename__ = "users"

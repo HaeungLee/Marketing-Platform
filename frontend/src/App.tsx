@@ -6,13 +6,14 @@ import DashboardPage from "./pages/DashboardPage";
 import BusinessSetupPage from "./pages/BusinessSetupPage";
 import ContentGeneratorPage from "./pages/ContentGeneratorPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import RealDataInsightsPage from "./pages/RealDataInsightsPage";
+import TargetInsightsPage from "./pages/TargetInsightsPage";
+import CommercialAnalysisPage from "./pages/CommercialAnalysisPage";
+import TrendAnalysisPage from "./pages/TrendAnalysisPage";
 import SettingsPage from "./pages/SettingsPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import PopulationDashboardPage from "./pages/PopulationDashboardPage";
-import FlyerGenerator from "./pages/FlyerGenerator";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Sbiz365 from "./pages/Sbiz365";
 
@@ -40,9 +41,10 @@ function App() {
             }
           />
           <Route path="business/setup" element={<BusinessSetupPage />} />          <Route path="content" element={<ContentGeneratorPage />} />
-          <Route path="flyer" element={<FlyerGenerator />} />
           <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="insights" element={<RealDataInsightsPage />} />
+          <Route path="target-insights" element={<TargetInsightsPage />} />
+          <Route path="commercial-analysis" element={<CommercialAnalysisPage />} />
+          <Route path="trend-analysis" element={<TrendAnalysisPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="sbiz365" element={<Sbiz365 />} />
         </Route>

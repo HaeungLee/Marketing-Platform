@@ -12,10 +12,11 @@ from sqlalchemy import pool
 from alembic import context
 
 # 모델 import
-from domain.entities.user import User, BusinessProfile
-from domain.entities.user_type import UserType
-from config.database import Base
-from config.settings import settings
+from src.domain.entities.user import User, BusinessProfile
+from src.domain.entities.user_type import UserType
+from src.domain.models.business_store import BusinessStore  # 새로 추가
+from src.config.database import Base
+from src.config.settings import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

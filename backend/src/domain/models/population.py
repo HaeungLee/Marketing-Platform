@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Date
-from config.database import Base
+from src.config.database import Base
 
 class PopulationStatistics(Base):
     __tablename__ = "population_statistics"

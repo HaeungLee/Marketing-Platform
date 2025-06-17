@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Date, DateTime, BigInteger, Float
 from sqlalchemy.sql import func
-from config.database import Base
+from src.config.database import Base
 
 
 class FloatingPopulation(Base):

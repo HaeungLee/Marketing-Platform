@@ -4,7 +4,7 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from config.settings import settings
+from src.config.settings import settings
 import logging
 
 logger = logging.getLogger(__name__)

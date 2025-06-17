@@ -22,6 +22,7 @@ class ImageGenerationResponse(BaseModel):
     file_size: Optional[int] = 0
     message: Optional[str] = ""
     image_data: Optional[str] = ""  # Base64 인코딩된 이미지 데이터
+    created_at: Optional[str] = ""
 
 @router.post("/generate", response_model=ImageGenerationResponse)
 async def generate_image(request: ImageGenerationRequest):
@@ -36,13 +37,15 @@ async def generate_image(request: ImageGenerationRequest):
         result = await image_service.generate_image(request.prompt, business_info)
         
         if result["success"]:
+            from datetime import datetime
             return ImageGenerationResponse(
                 success=True,
                 filename=result["filename"],
                 url=result["url"],
                 file_size=result["file_size"],
                 message=f"이미지가 성공적으로 생성되었습니다. (크기: {result['file_size']:,} bytes)",
-                image_data=result.get("image_data", "")  # Base64 이미지 데이터 추가
+                image_data=result.get("image_data", ""),  # Base64 이미지 데이터 추가
+                created_at=datetime.now().isoformat()
             )
         else:
             raise HTTPException(status_code=500, detail=result["error"])

@@ -10,7 +10,7 @@ from discord_webhook import DiscordWebhook
 from typing import Dict, Any
 import time
 import asyncio
-from config.settings import settings
+from src.config.settings import settings
 
 # 메트릭 정의
 SYSTEM_MEMORY_USAGE = Gauge("system_memory_usage_percent", "System memory usage in percent")

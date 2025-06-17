@@ -48,10 +48,14 @@ export interface ImageGenerationRequest {
 export interface ImageGenerationResponse {
   success: boolean;
   image_url?: string;
+  url?: string;
   filename?: string;
-  prompt: string;
+  prompt?: string;
   error?: string;
-  created_at: string;
+  created_at?: string;
+  image_data?: string;  // Base64 인코딩된 이미지 데이터
+  file_size?: number;
+  message?: string;
 }
 
 export interface TargetAudienceResponse {
