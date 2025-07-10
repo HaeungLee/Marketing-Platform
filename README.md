@@ -1,3 +1,15 @@
+<!-- 전체적으로 쓰인 기술들 버튼/뱃지 -->
+<p align="center">
+  <a href="https://fastapi.tiangolo.com/" target="_blank"><img src="https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi" alt="FastAPI" /></a>
+  <a href="https://react.dev/" target="_blank"><img src="https://img.shields.io/badge/Frontend-React-61DAFB?logo=react" alt="React" /></a>
+  <a href="https://www.typescriptlang.org/" target="_blank"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript" alt="TypeScript" /></a>
+  <a href="https://vitejs.dev/" target="_blank"><img src="https://img.shields.io/badge/Build-Vite-646CFF?logo=vite" alt="Vite" /></a>
+  <a href="https://chakra-ui.com/" target="_blank"><img src="https://img.shields.io/badge/UI-Chakra%20UI-319795?logo=chakraui" alt="Chakra UI" /></a>
+  <a href="https://recharts.org/" target="_blank"><img src="https://img.shields.io/badge/Charts-Recharts-FF7300?logo=recharts" alt="Recharts" /></a>
+  <a href="https://leafletjs.com/" target="_blank"><img src="https://img.shields.io/badge/Maps-React%20Leaflet-199900?logo=leaflet" alt="React Leaflet" /></a>
+  <a href="https://cloud.google.com/ai/gemini" target="_blank"><img src="https://img.shields.io/badge/AI-Gemini-4285F4?logo=google" alt="Gemini" /></a>
+</p>
+
 # AI 마케팅 플랫폼 🚀
 
 소상공인과 중소기업을 위한 종합 AI 마케팅 솔루션
@@ -5,6 +17,11 @@
 ## 📋 프로젝트 개요
 
 본 프로젝트는 소상공인과 중소기업이 손쉽게 마케팅 콘텐츠를 생성하고 관리할 수 있도록 도와주는 AI 기반 플랫폼입니다. 업종 정보와 상품 정보를 입력하면 공공데이터와 업종 특성을 바탕으로 타겟층을 분석하고, 네이버 블로그, 인스타그램, 유튜브 숏폼, 전단지용 마케팅 콘텐츠를 자동 생성합니다.
+
+<!-- 데모 시연 영상 -->
+<p align="center">
+  <img src="scripts/market.gif" alt="데모 시연 영상" width="600" />
+</p>
 
 ## ✨ 주요 기능
 
