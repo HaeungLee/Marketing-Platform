@@ -6,13 +6,14 @@ version: '3.8'
 services:
   # PostgreSQL 데이터베이스 (운영환경과 동일)
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg17
     container_name: marketing_platform_db_dev
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-marketing_platform_dev}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
       - ./database/init:/docker-entrypoint-initdb.d/
@@ -20,6 +21,11 @@ services:
       - "5433:5432"  # 운영환경과 포트 분리
     networks:
       - marketing_dev_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-marketing_platform_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Redis 캐시 (개발환경)
   redis:
