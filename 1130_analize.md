@@ -505,42 +505,159 @@ frontend/src/
 
 ## 9. 우선순위별 로드맵
 
-### Phase 1: 보안 및 안정화 (1-2주)
+---
 
-| 작업 | 예상 시간 | 담당 |
-|------|----------|------|
-| API 키 환경 변수 분리 | 2시간 | 백엔드 |
-| CORS 설정 수정 | 1시간 | 백엔드 |
-| Rate Limiting 구현 | 4시간 | 백엔드 |
-| HTTPS 설정 | 2시간 | DevOps |
-| 중복 파일 정리 | 2시간 | 프론트엔드 |
+## 🗄️ 데이터베이스 최적화 분석
 
-### Phase 2: 테스트 및 품질 (2-3주)
+### 마이그레이션 파일 분석 결과
 
-| 작업 | 예상 시간 | 담당 |
-|------|----------|------|
-| 핵심 API 단위 테스트 | 16시간 | 백엔드 |
-| 주요 컴포넌트 테스트 | 12시간 | 프론트엔드 |
-| E2E 테스트 (주요 플로우) | 8시간 | QA |
-| 성능 최적화 | 8시간 | 풀스택 |
+| 테이블 | 인덱스 | 상태 | 개선 필요 |
+|--------|--------|------|----------|
+| `users` | email (unique) | ✅ 적절 | - |
+| `email_verifications` | email | ✅ 적절 | - |
+| `password_resets` | token (unique) | ✅ 적절 | - |
+| `business_stores` | 10개 인덱스 | ⚠️ 과다 | 복합 인덱스 권장 |
+| `population_statistics` | 삭제됨 | ❌ | 현재 없음 |
 
-### Phase 3: 기능 강화 (3-4주)
+### 🔴 business_stores 인덱스 최적화 필요
 
-| 작업 | 예상 시간 | 담당 |
-|------|----------|------|
-| AI 챗봇 MVP | 40시간 | 풀스택 |
-| 콘텐츠 스케줄링 | 32시간 | 풀스택 |
-| 고객 리뷰 분석 | 24시간 | 백엔드 |
-| 모바일 반응형 개선 | 16시간 | 프론트엔드 |
+**현재 문제점:**
+```sql
+-- 개별 인덱스 10개 (과다)
+ix_business_stores_business_code
+ix_business_stores_business_name
+ix_business_stores_business_status
+ix_business_stores_dong_name
+ix_business_stores_latitude
+ix_business_stores_longitude
+ix_business_stores_sido_name
+ix_business_stores_sigungu_name
+ix_business_stores_store_name
+ix_business_stores_store_number (unique)
+```
 
-### Phase 4: 확장 및 최적화 (4주+)
+**권장 최적화:**
+```sql
+-- 1. 위치 기반 조회용 복합 인덱스
+CREATE INDEX ix_business_stores_location 
+ON business_stores (sido_name, sigungu_name, dong_name);
 
-| 작업 | 예상 시간 | 담당 |
-|------|----------|------|
-| 소셜 미디어 API 연동 | 40시간 | 백엔드 |
-| A/B 테스트 도구 | 24시간 | 풀스택 |
-| 경쟁사 모니터링 | 32시간 | 백엔드 |
-| 결제 시스템 | 40시간 | 풀스택 |
+-- 2. 위경도 조회용 복합 인덱스 (GIST 권장)
+CREATE INDEX ix_business_stores_geo 
+ON business_stores USING GIST (point(longitude, latitude));
+
+-- 3. 업종 + 상태 복합 인덱스
+CREATE INDEX ix_business_stores_business 
+ON business_stores (business_code, business_status);
+
+-- 불필요 인덱스 제거
+DROP INDEX ix_business_stores_latitude;
+DROP INDEX ix_business_stores_longitude;
+DROP INDEX ix_business_stores_sido_name;
+DROP INDEX ix_business_stores_sigungu_name;
+DROP INDEX ix_business_stores_dong_name;
+```
+
+### 🟡 추가 권장 사항
+
+1. **PostgreSQL PostGIS 확장 사용** - 지리 공간 쿼리 최적화
+2. **파티셔닝 고려** - `sido_name` 기준 테이블 분할 (데이터 증가 시)
+3. **VACUUM ANALYZE** - 정기적 통계 업데이트
+
+---
+
+## 🚀 Phase별 실행 계획 (실행 가능한 작업 단위)
+
+### ✅ Phase 0: 완료된 작업
+
+| # | 작업 | 상태 |
+|---|------|------|
+| 0.1 | API 키 환경 변수 분리 | ✅ 완료 |
+| 0.2 | CORS 설정 수정 | ✅ 완료 |
+| 0.3 | JWT 보안 강화 | ✅ 완료 |
+| 0.4 | Rate Limiting 미들웨어 | ✅ 완료 |
+| 0.5 | pytest 테스트 구조 | ✅ 완료 |
+| 0.6 | 레거시 파일 정리 | ✅ 완료 |
+| 0.7 | gemini_service import 수정 | ✅ 완료 |
+
+---
+
+### 🔵 Phase 1: 데이터베이스 최적화 (현재 단계)
+
+**목표**: 쿼리 성능 개선 및 인덱스 최적화
+
+| # | 작업 | 예상 시간 | 난이도 |
+|---|------|----------|--------|
+| 1.1 | business_stores 복합 인덱스 생성 마이그레이션 | 30분 | 🟢 |
+| 1.2 | 불필요 인덱스 제거 마이그레이션 | 15분 | 🟢 |
+| 1.3 | PostGIS 확장 적용 (선택) | 1시간 | 🟡 |
+| 1.4 | 쿼리 최적화 (N+1 문제 해결) | 2시간 | 🟡 |
+
+---
+
+### 🔵 Phase 2: 프론트엔드 정리 및 개선
+
+**목표**: 코드 품질 향상 및 중복 제거
+
+| # | 작업 | 예상 시간 | 난이도 |
+|---|------|----------|--------|
+| 2.1 | 중복 파일 정리 (HomePage2, FlyerGenerator_clean 등) | 30분 | 🟢 |
+| 2.2 | 공통 컴포넌트 분리 (StatCard, DataCard 등) | 2시간 | 🟡 |
+| 2.3 | React Query v5 업그레이드 | 1시간 | 🟡 |
+| 2.4 | 에러 바운더리 추가 | 1시간 | 🟢 |
+
+---
+
+### 🔵 Phase 3: 테스트 커버리지 확대
+
+**목표**: 핵심 기능 테스트 커버리지 50% 달성
+
+| # | 작업 | 예상 시간 | 난이도 |
+|---|------|----------|--------|
+| 3.1 | API 엔드포인트 통합 테스트 추가 | 3시간 | 🟡 |
+| 3.2 | 서비스 레이어 단위 테스트 | 3시간 | 🟡 |
+| 3.3 | 프론트엔드 컴포넌트 테스트 (Jest) | 2시간 | 🟡 |
+| 3.4 | E2E 테스트 설정 (Playwright) | 2시간 | 🟡 |
+
+---
+
+### 🔵 Phase 4: 인프라 및 배포 강화
+
+**목표**: 프로덕션 배포 준비
+
+| # | 작업 | 예상 시간 | 난이도 |
+|---|------|----------|--------|
+| 4.1 | HTTPS 설정 (Let's Encrypt) | 1시간 | 🟢 |
+| 4.2 | Security Headers 추가 | 30분 | 🟢 |
+| 4.3 | 로깅 시스템 구축 (구조화된 로그) | 2시간 | 🟡 |
+| 4.4 | 에러 추적 (Sentry) 연동 | 1시간 | 🟢 |
+| 4.5 | 데이터베이스 백업 자동화 | 1시간 | 🟡 |
+
+---
+
+### 🔵 Phase 5: 기능 완성
+
+**목표**: MVP 기능 완성 및 사용자 경험 개선
+
+| # | 작업 | 예상 시간 | 난이도 |
+|---|------|----------|--------|
+| 5.1 | AI 챗봇 프론트엔드 UI (플로팅 위젯) | 4시간 | 🟡 |
+| 5.2 | 회원가입 엔드포인트 구현 | 2시간 | 🟢 |
+| 5.3 | 이메일 인증 시스템 | 3시간 | 🟡 |
+| 5.4 | 비밀번호 재설정 플로우 | 2시간 | 🟡 |
+| 5.5 | 사용자 대시보드 개선 | 4시간 | 🟡 |
+
+---
+
+## 📋 지금 실행할 작업 선택
+
+**Phase 1.1**부터 시작하시겠습니까?
+
+작업 옵션:
+- `1.1` - business_stores 인덱스 최적화 마이그레이션 생성
+- `2.1` - 프론트엔드 중복 파일 정리
+- `3.1` - API 통합 테스트 추가
+- `다른 번호` - 원하는 작업 선택
 
 ---
 
