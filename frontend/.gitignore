@@ -26,5 +26,8 @@ jspm_packages/
 *.sln
 *.sw?
 
+# Backup/legacy files
+src/backup/
+
 # Miscellaneous
 .DS_Store
