@@ -266,10 +266,10 @@ class TestPasswordSecurity:
     @pytest.mark.unit
     def test_password_hashing(self):
         """비밀번호 해싱 테스트"""
-        from src.infrastructure.security.password import hash_password, verify_password
+        from src.infrastructure.security.password import get_password_hash, verify_password
         
         password = "TestPassword123!"
-        hashed = hash_password(password)
+        hashed = get_password_hash(password)
         
         # 해시 생성 확인
         assert hashed != password
@@ -282,11 +282,11 @@ class TestPasswordSecurity:
     @pytest.mark.unit
     def test_same_password_different_hash(self):
         """같은 비밀번호도 다른 해시 생성"""
-        from src.infrastructure.security.password import hash_password
+        from src.infrastructure.security.password import get_password_hash
         
         password = "TestPassword123!"
-        hash1 = hash_password(password)
-        hash2 = hash_password(password)
+        hash1 = get_password_hash(password)
+        hash2 = get_password_hash(password)
         
         # 솔트로 인해 매번 다른 해시
         assert hash1 != hash2

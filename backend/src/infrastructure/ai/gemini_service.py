@@ -8,7 +8,7 @@ import time
 from typing import Dict, Any, List, Optional
 from google import genai
 from google.genai.types import GenerateContentConfig, Modality
-from application.interfaces.ai_service import AIService
+from src.application.interfaces.ai_service import AIService
 
 
 class GeminiService(AIService):
