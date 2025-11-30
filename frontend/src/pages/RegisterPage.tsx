@@ -19,6 +19,7 @@ import {
   Text,
   Container,
   useColorModeValue,
+  useToast,
   IconButton,
   Select,
   Card,
@@ -775,7 +776,7 @@ const RegisterPage = () => {
 
   const handlePersonalRegister = async (data: FormData) => {
     try {
-      const response = await authApi.registerPersonal(data);
+      await authApi.registerPersonal(data);
       toast({
         title: "회원가입 성공",
         description: "회원가입이 완료되었습니다.",

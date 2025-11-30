@@ -92,6 +92,23 @@ export const authApi = {
     });
     return response.data;
   },
+
+  // 비밀번호 찾기 (이메일 전송)
+  forgotPassword: async (email: string) => {
+    const response = await apiClient.post("/auth/forgot-password", {
+      email: email,
+    });
+    return response.data;
+  },
+
+  // 비밀번호 재설정
+  resetPassword: async (token: string, newPassword: string) => {
+    const response = await apiClient.post("/auth/reset-password", {
+      token: token,
+      new_password: newPassword,
+    });
+    return response.data;
+  },
 };
 
 export const businessApi = {

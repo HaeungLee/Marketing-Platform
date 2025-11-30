@@ -30,11 +30,8 @@ import {
   TabPanel,
   Button,
   Select,
-  Input,
-  InputGroup,
-  InputLeftElement,
 } from "@chakra-ui/react";
-import { FiMapPin, FiTrendingUp, FiUsers, FiDollarSign, FiBarChart, FiRefreshCw, FiSearch } from "react-icons/fi";
+import { FiMapPin, FiBarChart, FiRefreshCw } from "react-icons/fi";
 import { businessStoreService } from "../services/businessStoreService";
 import type { BusinessStore, NearbyStoresResponse, BusinessStatistics } from "../services/businessStoreService";
 

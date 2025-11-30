@@ -107,7 +107,7 @@ const BusinessSetupPage: React.FC = () => {
   };
 
   const LocationPicker = () => {
-    const map = useMapEvents({
+    useMapEvents({
       click: (e) => {
         setBusinessData((prev) => ({
           ...prev,

@@ -15,7 +15,6 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
-  useToast,
   Select,
   Button,
   Flex,
@@ -25,7 +24,6 @@ import {
 } from "@chakra-ui/react";
 import { FiTarget, FiMapPin, FiClock, FiRefreshCw, FiTrendingUp } from "react-icons/fi";
 import { businessStoreService } from "../services/businessStoreService";
-import type { BusinessStore } from "../services/businessStoreService";
 
 interface TargetCustomerData {
   primaryTarget: string;
@@ -74,7 +72,6 @@ const TargetInsightsPage: React.FC = () => {
   const [businessType, setBusinessType] = useState("카페");
   const [region, setRegion] = useState("강남구");
   const [budget, setBudget] = useState(50000000);
-  const toast = useToast();
 
   const fetchTargetAnalysis = async () => {
     setLoading(true);

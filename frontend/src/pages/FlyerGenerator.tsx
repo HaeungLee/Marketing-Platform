@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Box,
   VStack,
@@ -9,9 +9,7 @@ import {
   useToast,
   Container,
   Heading,
-  ButtonGroup,
   IconButton,
-  Spacer,
   Image,
   Alert,
   AlertIcon,

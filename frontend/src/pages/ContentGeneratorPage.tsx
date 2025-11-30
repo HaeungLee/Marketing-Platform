@@ -6,7 +6,6 @@ import {
   HStack,
   Button,
   Textarea,
-  Input,
   useToast,
   Image,
   Tabs,
@@ -21,7 +20,6 @@ import {
   Heading,
 } from "@chakra-ui/react";
 import { DownloadIcon, RepeatIcon } from "@chakra-ui/icons";
-import apiClient from "../services/api";
 import { contentApi } from "../services/apiService";
 import type { ImageGenerationResponse } from "../types/api";
 
