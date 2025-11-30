@@ -9,7 +9,6 @@ import {
   Input,
   InputGroup,
   InputRightElement,
-  Stack,
   Tab,
   TabList,
   TabPanel,
@@ -19,7 +18,6 @@ import {
   Heading,
   Text,
   Container,
-  useToast,
   useColorModeValue,
   IconButton,
   Select,
@@ -422,14 +420,12 @@ interface BusinessRegisterFormProps {
 const BusinessRegisterForm: React.FC<BusinessRegisterFormProps> = ({
   onSubmit,
 }) => {
-  const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm<FormData>();
 
   const handleFormSubmit: SubmitHandler<FormData> = async (data) => {

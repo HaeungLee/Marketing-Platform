@@ -17,6 +17,8 @@ import {
   Card,
   CardBody,
   Flex,
+  Wrap,
+  WrapItem,
 } from '@chakra-ui/react';
 import {
   FiSend,
@@ -24,6 +26,7 @@ import {
   FiMaximize2,
   FiPlus,
   FiMessageSquare,
+  FiMinimize2,
 } from 'react-icons/fi';
 
 interface Message {
@@ -38,6 +41,14 @@ interface ConsultationContext {
   region?: string;
   budget?: string;
 }
+
+// 빠른 질문 목록
+const QUICK_QUESTIONS = [
+  { label: '🏪 상권 분석', question: '우리 동네 상권 분석 방법을 알려주세요' },
+  { label: '🚀 창업 준비', question: '카페 창업 준비는 어떻게 해야 하나요?' },
+  { label: '📢 마케팅', question: '소상공인 마케팅 방법을 추천해주세요' },
+  { label: '💰 지원사업', question: '소상공인 정부 지원사업에는 무엇이 있나요?' },
+];
 
 const AIConsultantChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -207,6 +218,42 @@ const AIConsultantChat: React.FC = () => {
     });
   };
 
+  // 간단한 마크다운 렌더링 (볼드, 불릿 등)
+  const renderFormattedText = (text: string) => {
+    // **텍스트** → 볼드
+    // • 또는 - 로 시작하는 줄 → 불릿 포인트
+    const lines = text.split('\n');
+    
+    return lines.map((line, idx) => {
+      // 볼드 처리
+      const parts = line.split(/(\*\*[^*]+\*\*)/g);
+      const formattedParts = parts.map((part, partIdx) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return (
+            <Text as="strong" key={partIdx} fontWeight="bold">
+              {part.slice(2, -2)}
+            </Text>
+          );
+        }
+        return part;
+      });
+
+      // 불릿 포인트 스타일
+      const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-');
+      
+      return (
+        <Text 
+          key={idx} 
+          fontSize="sm"
+          pl={isBullet ? 2 : 0}
+          mb={0.5}
+        >
+          {formattedParts}
+        </Text>
+      );
+    });
+  };
+
   return (
     <>
       {/* AI 상담 버튼 */}
@@ -282,13 +329,15 @@ const AIConsultantChat: React.FC = () => {
                 size="sm"
                 variant="ghost"
                 onClick={startNewConversation}
+                title="새 대화 시작"
               />
               <IconButton
                 aria-label={isFullscreen ? "창 모드" : "전체화면"}
-                icon={<FiMaximize2 />}
+                icon={isFullscreen ? <FiMinimize2 /> : <FiMaximize2 />}
                 size="sm"
                 variant="ghost"
                 onClick={toggleFullscreen}
+                title={isFullscreen ? "창 모드로 전환" : "전체화면으로 전환"}
               />
               <IconButton
                 aria-label="닫기"
@@ -296,6 +345,7 @@ const AIConsultantChat: React.FC = () => {
                 size="sm"
                 variant="ghost"
                 onClick={onClose}
+                title="채팅창 닫기"
               />
             </HStack>
           </Flex>
@@ -326,7 +376,7 @@ const AIConsultantChat: React.FC = () => {
                     mb={1}
                   >
                     <Box
-                      maxW="80%"
+                      maxW="85%"
                       bg={message.type === 'user' ? userMessageBg : messageBg}
                       color={message.type === 'user' ? 'white' : 'inherit'}
                       p={3}
@@ -334,9 +384,13 @@ const AIConsultantChat: React.FC = () => {
                       borderBottomRightRadius={message.type === 'user' ? 'sm' : 'lg'}
                       borderBottomLeftRadius={message.type === 'ai' ? 'sm' : 'lg'}
                     >
-                      <Text fontSize="sm" whiteSpace="pre-wrap">
-                        {message.content}
-                      </Text>
+                      {message.type === 'ai' ? (
+                        <Box>{renderFormattedText(message.content)}</Box>
+                      ) : (
+                        <Text fontSize="sm" whiteSpace="pre-wrap">
+                          {message.content}
+                        </Text>
+                      )}
                     </Box>
                   </Flex>
                   <Text
@@ -371,6 +425,27 @@ const AIConsultantChat: React.FC = () => {
             borderColor={borderColor}
             borderBottomRadius={isFullscreen ? 0 : 'xl'}
           >
+            {/* 빠른 질문 버튼 - 메시지가 환영 메시지만 있을 때 표시 */}
+            {messages.length === 1 && (
+              <Wrap spacing={2} mb={3}>
+                {QUICK_QUESTIONS.map((q, idx) => (
+                  <WrapItem key={idx}>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      colorScheme="blue"
+                      onClick={() => {
+                        setInputMessage(q.question);
+                      }}
+                      isDisabled={loading}
+                    >
+                      {q.label}
+                    </Button>
+                  </WrapItem>
+                ))}
+              </Wrap>
+            )}
+            
             <HStack spacing={2}>
               <Input
                 value={inputMessage}

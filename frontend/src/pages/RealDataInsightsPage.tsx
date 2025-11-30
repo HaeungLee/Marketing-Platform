@@ -18,11 +18,9 @@ import {
   StatArrow,
   Grid,
   GridItem,
-  Spinner,
   Alert,
   AlertIcon,
   Divider,
-  Progress,
   useColorModeValue,
   useToast,
   Tabs,
@@ -42,11 +40,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar
 } from 'recharts';
 import { FaUsers, FaMapMarkerAlt, FaClock, FaChartLine, FaLightbulb } from 'react-icons/fa';
 

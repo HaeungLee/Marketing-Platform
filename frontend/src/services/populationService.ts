@@ -220,7 +220,7 @@ class PopulationService {
           total_population: total,
         },
         age_distribution: ageRatios,
-        gender_ratio,
+        gender_ratio: genderRatio,
         demographics,
         insights: this.generateInsights(demographics, genderRatio),
       };
