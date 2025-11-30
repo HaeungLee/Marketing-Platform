@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import os
-from application.services.ai_consultant_service import AIConsultantService
+from src.application.services.ai_consultant_service import AIConsultantService
 
 router = APIRouter(prefix="/consultation", tags=["AI 상담"])
 

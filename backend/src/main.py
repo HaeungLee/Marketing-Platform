@@ -16,6 +16,7 @@ import logging
 import time
 
 from src.config.settings import settings
+from src.infrastructure.middleware.rate_limit import RateLimitMiddleware
 
 # API 라우터 임포트
 from src.presentation.api.v1.auth import router as auth_router
@@ -80,9 +81,30 @@ def create_app() -> FastAPI:
             "X-Requested-With",
             "X-Request-ID",
         ],
-        expose_headers=["Content-Length", "Content-Type", "X-Request-ID"],
+        expose_headers=[
+            "Content-Length", 
+            "Content-Type", 
+            "X-Request-ID",
+            "X-RateLimit-Limit",
+            "X-RateLimit-Remaining",
+            "X-RateLimit-Reset",
+        ],
         max_age=600,  # Preflight 캐시 시간 (초)
     )
+    
+    # =================================
+    # Rate Limiting 미들웨어
+    # =================================
+    if settings.rate_limit_enabled:
+        app.add_middleware(
+            RateLimitMiddleware,
+            requests_per_minute=settings.rate_limit_requests,
+            window_seconds=settings.rate_limit_window,
+            redis_client=None,  # TODO: Redis 연결 시 추가
+            exclude_paths=["/health", "/docs", "/redoc", "/openapi.json", "/static"],
+            enabled=settings.rate_limit_enabled
+        )
+        logger.info(f"Rate limiting enabled: {settings.rate_limit_requests} req/{settings.rate_limit_window}s")
     
     # =================================
     # 요청 로깅 미들웨어

@@ -361,21 +361,23 @@ frontend/src/
 
 ### 7.1 핵심 기능 확장
 
-#### 🤖 AI 챗봇 상담 시스템 (미구현 - 문서에만 존재)
+#### 🤖 AI 챗봇 상담 시스템 (✅ 구현됨)
 ```
-⚠️ 현재 상태: futureplan.md에 계획만 있고 실제 구현 없음
+✅ 현재 상태: 백엔드 API 구현 완료
 
-목적: 24/7 마케팅 상담 서비스
-구현 필요 사항:
-- ChatBot.tsx 컴포넌트 생성
-- chatbot_service.py 백엔드 서비스
-- 우측 하단 플로팅 챗봇 아이콘
+구현된 기능:
+- src/presentation/api/v1/consultation.py - API 엔드포인트
+- src/application/services/ai_consultant_service.py - AI 상담 서비스
 - Gemini API 기반 대화형 상담
-- 마케팅 전략, 콘텐츠 기획 조언
+- 상권분석, 창업전략, 마케팅, 정부지원, 경영개선 주제 지원
+- Fallback 응답 시스템
+
+추가 필요 사항:
+- 프론트엔드 ChatBot.tsx 컴포넌트 (플로팅 챗봇 UI)
 - 대화 히스토리 저장
 ```
 
-**예상 구현 기간**: 2-3주
+**남은 작업**: 프론트엔드 UI 구현 (1주)
 
 #### 📅 콘텐츠 스케줄링 시스템
 ```
@@ -579,11 +581,15 @@ frontend/src/
 5. ✅ `.env` 파일 생성 및 설정 완료
 6. ✅ 요청 로깅 미들웨어 추가
 7. ✅ 전역 예외 핸들러 추가
+8. ✅ Rate Limiting 미들웨어 구현 (`rate_limit.py`)
+9. ✅ pytest 테스트 구조 추가 (`conftest.py`, `pytest.ini`)
+10. ✅ API/보안 테스트 파일 추가
+11. ✅ AI 챗봇 백엔드 구현 확인 (consultation.py, ai_consultant_service.py)
 
 ### 향후 작업 필요:
-- ⏳ Rate Limiting 미들웨어 실제 구현
-- ⏳ AI 챗봇 기능 구현 (현재 문서에만 존재)
+- ⏳ AI 챗봇 프론트엔드 UI 구현 (플로팅 ChatBot 컴포넌트)
 - ⏳ 중복 파일 정리 및 코드 리팩토링
+- ⏳ 테스트 커버리지 확대
 
 ### 단기 목표 (1개월):
 - 보안 이슈 해결 ✅
@@ -591,7 +597,7 @@ frontend/src/
 - 핵심 사용자 플로우 안정화
 
 ### 중기 목표 (3개월):
-- AI 챗봇 기능 추가
+- AI 챗봇 프론트엔드 UI
 - 콘텐츠 스케줄링 시스템
 - 모바일 앱 MVP
 
@@ -604,6 +610,9 @@ frontend/src/
 | 2025-11-30 | 보안 개선: 환경변수 분리, CORS 수정 | `settings.py`, `main.py`, `.env` |
 | 2025-11-30 | JWT 보안 강화: 토큰 클레임 추가, Refresh Token | `jwt.py` |
 | 2025-11-30 | Redis 보안 설정 추가 | `settings.py` |
+| 2025-11-30 | Rate Limiting 미들웨어 구현 | `rate_limit.py`, `main.py` |
+| 2025-11-30 | pytest 테스트 구조 추가 | `conftest.py`, `pytest.ini`, `test_*.py` |
+| 2025-11-30 | AI 상담 import 경로 수정 | `consultation.py`, `ai_consultant_service.py` |
 | 2025-11-30 | 분석 문서 작성 및 업데이트 | `1130_analize.md` |
 
 ---

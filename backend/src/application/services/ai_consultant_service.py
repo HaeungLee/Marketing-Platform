@@ -2,7 +2,7 @@
 AI 상담 서비스 - 소상공인 특화 상담 시스템
 """
 from typing import Dict, Any, Optional
-from infrastructure.ai.gemini_service import GeminiService
+from src.infrastructure.ai.gemini_service import GeminiService
 
 
 class AIConsultantService(GeminiService):
