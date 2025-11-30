@@ -15,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { FiBell, FiChevronDown, FiUser, FiLogOut } from "react-icons/fi";
 import { useAuth } from "../contexts/AuthContext";
+import AIConsultantChat from "./AIConsultantChat";
 
 const Header: React.FC = () => {
   const { isAuthenticated, username, userEmail, userType, logout } = useAuth();
@@ -43,6 +44,9 @@ const Header: React.FC = () => {
 
         {/* 우측 액션 영역 */}
         <Flex align="center" gap={4}>
+          {/* AI 상담 버튼 */}
+          <AIConsultantChat />
+
           {/* 알림 버튼 */}
           <Box position="relative">
             <Button
