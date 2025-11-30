@@ -6,6 +6,8 @@ Main FastAPI application module following Clean Architecture principles.
 - CORS 설정을 환경변수 기반으로 변경
 - 프로덕션/개발 환경 분리
 - Rate Limiting 미들웨어 추가
+- Security Headers 미들웨어 추가
+- Structured Logging 적용
 """
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +19,8 @@ import time
 
 from src.config.settings import settings
 from src.infrastructure.middleware.rate_limit import RateLimitMiddleware
+from src.infrastructure.middleware.security_headers import SecurityHeadersMiddleware
+from src.infrastructure.logging import setup_logging
 
 # API 라우터 임포트
 from src.presentation.api.v1.auth import router as auth_router
@@ -29,8 +33,13 @@ from src.presentation.api.population import router as population_router
 from src.presentation.api.image_router import router as image_router
 from src.presentation.api.v1.business_stores import router as business_stores_router
 
-# 로깅 설정
-logging.basicConfig(level=getattr(logging, settings.log_level.upper()))
+# 구조화된 로깅 설정
+setup_logging(
+    level=settings.log_level.upper(),
+    json_format=settings.is_production,  # 프로덕션에서는 JSON 형식
+    app_name="marketing-platform",
+    environment=settings.environment,
+)
 logger = logging.getLogger(__name__)
 
 
@@ -48,6 +57,17 @@ def create_app() -> FastAPI:
         docs_url="/docs" if settings.is_development else None,  # 프로덕션에서 docs 비활성화 (선택적)
         redoc_url="/redoc" if settings.is_development else None,
     )
+    
+    # =================================
+    # Security Headers 미들웨어
+    # =================================
+    from src.infrastructure.middleware.security_headers import get_security_headers_config
+    security_config = get_security_headers_config(is_production=settings.is_production)
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        **security_config,
+    )
+    logger.info(f"Security Headers middleware enabled (HSTS: {security_config['enable_hsts']}, CSP: {security_config['enable_csp']})")
     
     # =================================
     # CORS 설정 (환경변수 기반)
@@ -107,7 +127,7 @@ def create_app() -> FastAPI:
         logger.info(f"Rate limiting enabled: {settings.rate_limit_requests} req/{settings.rate_limit_window}s")
     
     # =================================
-    # 요청 로깅 미들웨어
+    # 요청 로깅 미들웨어 (구조화된 로깅)
     # =================================
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
@@ -117,8 +137,16 @@ def create_app() -> FastAPI:
         import secrets
         request_id = secrets.token_urlsafe(8)
         
-        # 요청 로깅
-        logger.info(f"[{request_id}] {request.method} {request.url.path}")
+        # 요청 로깅 (구조화)
+        logger.info(
+            "Request started",
+            extra={
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "client_ip": request.client.host if request.client else "unknown",
+            }
+        )
         
         response = await call_next(request)
         
@@ -127,8 +155,19 @@ def create_app() -> FastAPI:
         response.headers["X-Process-Time"] = str(process_time)
         response.headers["X-Request-ID"] = request_id
         
-        # 응답 로깅
-        logger.info(f"[{request_id}] Completed in {process_time:.3f}s - Status: {response.status_code}")
+        # 응답 로깅 (구조화)
+        log_level = logging.WARNING if response.status_code >= 400 else logging.INFO
+        logger.log(
+            log_level,
+            "Request completed",
+            extra={
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "duration_ms": round(process_time * 1000, 2),
+            }
+        )
         
         return response
     
@@ -137,7 +176,16 @@ def create_app() -> FastAPI:
     # =================================
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
-        logger.error(f"Unhandled exception: {exc}", exc_info=True)
+        logger.error(
+            "Unhandled exception",
+            extra={
+                "exception_type": type(exc).__name__,
+                "exception_message": str(exc),
+                "path": request.url.path,
+                "method": request.method,
+            },
+            exc_info=True
+        )
         
         # 프로덕션에서는 상세 에러 숨김
         if settings.is_production:
@@ -180,8 +228,13 @@ def create_app() -> FastAPI:
     @app.get("/api/health")
     async def api_health_check():
         """API 상세 헬스체크"""
+        import asyncpg
+        
         health_status = {
             "status": "healthy",
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "version": "0.1.0",
+            "environment": settings.environment,
             "checks": {
                 "api": True,
                 "database": False,
@@ -189,19 +242,37 @@ def create_app() -> FastAPI:
             }
         }
         
-        # 데이터베이스 연결 확인 (선택적)
+        # 데이터베이스 연결 확인
         try:
-            # TODO: 실제 DB 연결 확인 로직 추가
+            # asyncpg 직접 연결로 health check
+            db_url = settings.database_url.replace("postgresql+asyncpg://", "postgresql://")
+            conn = await asyncpg.connect(db_url)
+            await conn.fetchval("SELECT 1")
+            await conn.close()
             health_status["checks"]["database"] = True
+            logger.debug("Database health check passed")
         except Exception as e:
-            logger.warning(f"Database health check failed: {e}")
+            logger.warning(
+                "Database health check failed",
+                extra={"error": str(e), "error_type": type(e).__name__}
+            )
+            health_status["checks"]["database"] = False
         
-        # Redis 연결 확인 (선택적)
+        # Redis 연결 확인
         try:
-            # TODO: 실제 Redis 연결 확인 로직 추가
+            import redis.asyncio as aioredis
+            redis_url = settings.redis_url
+            redis_client = await aioredis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+            await redis_client.ping()
+            await redis_client.close()
             health_status["checks"]["redis"] = True
+            logger.debug("Redis health check passed")
         except Exception as e:
-            logger.warning(f"Redis health check failed: {e}")
+            logger.warning(
+                "Redis health check failed", 
+                extra={"error": str(e), "error_type": type(e).__name__}
+            )
+            health_status["checks"]["redis"] = False
         
         # 전체 상태 결정
         if not all(health_status["checks"].values()):
