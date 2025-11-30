@@ -1,0 +1,65 @@
+# AI 마케팅 플랫폼 설치 및 실행 가이드
+
+## 1. 사전 요구사항
+- Python 3.11 이상
+- Node.js 18 이상
+- npm
+
+## 2. 설치 방법
+
+### 2-1. 저장소 클론
+```bash
+git clone <레포지토리_URL>
+cd Marketing-Platform
+```
+
+### 2-2. 환경 변수 설정
+- `.env.example` 파일을 복사하여 `.env` 파일 생성 후 필요한 값을 입력하세요.
+```bash
+copy .env.example .env
+```
+
+## 3. 백엔드(backend) 설치 및 실행
+
+### 3-1. 의존성 설치
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+### 3-2. 서버 실행
+```bash
+python run.py
+```
+- 서버가 http://localhost:8000 에서 실행됩니다.
+- API 문서: http://localhost:8000/docs
+
+## 4. 프론트엔드(frontend) 설치 및 실행
+
+### 4-1. 의존성 설치
+```bash
+cd ../frontend
+npm install
+```
+
+### 4-2. 개발 서버 실행
+```bash
+npm run dev
+```
+- 기본 접속: http://localhost:5173
+
+## 5. 전체 시스템 Docker로 실행 (선택사항)
+```bash
+docker-start.bat
+```
+- 프론트엔드: http://localhost
+- 백엔드 API: http://localhost:8000
+
+## 6. 기타
+- 전체 정리 및 초기화: `docker-clean.bat`
+- 테스트 실행:  
+  - 백엔드: `cd backend && python -m pytest`
+  - 프론트엔드: `cd frontend && npm test`
+
+---
+자세한 내용은 [README.md](README.md)와 [DOCKER_GUIDE.md](DOCKER_GUIDE.md)를 참고하세요.
